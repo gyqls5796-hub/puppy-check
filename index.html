@@ -36,15 +36,15 @@
     <!-- 3D 렌더링 영역 -->
     <div id="canvas-container"></div>
     
-    <!-- HTML 마커 (3D 좌표에 맞춰 이동) -->
+    <!-- HTML 마커 -->
     <div id="marker1" class="pulse-marker"></div>
     <div id="marker2" class="pulse-marker"></div>
     <div id="marker3" class="pulse-marker"></div>
 
-    <!-- UI 영역 (모바일 비율 430px 고정) -->
+    <!-- UI 영역 -->
     <div class="ui-layer flex flex-col justify-between p-6">
         
-        <!-- 상단 타이틀 & 로딩 -->
+        <!-- 상단 타이틀 -->
         <div class="text-center mt-8 bg-white/80 backdrop-blur-sm p-4 rounded-2xl shadow-sm">
             <h1 class="text-xl font-bold text-gray-800">🐶 진드기 체크 포인트</h1>
             <p class="text-sm text-gray-500 mt-1">주요 호발 부위를 확인하세요</p>
@@ -65,7 +65,7 @@
                 ▶ 교육 영상 시청하기
             </button>
 
-            <!-- 이벤트 모달 (완료 후 표시) -->
+            <!-- 이벤트 모달 -->
             <div id="eventModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-red-50">
                 <div class="text-4xl mb-3">🎁</div>
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">교육 완료!</h2>
@@ -77,6 +77,9 @@
                     </button>
                     <button onclick="window.open('https://youtube.com/@지원단유튜브아이디', '_blank')" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90">
                         유튜브 구독하기
+                    </button>
+                    <button id="replayBtn" class="w-full flex items-center justify-center gap-2 bg-gray-500 text-white font-bold py-3 px-4 rounded-xl hover:bg-gray-600 mt-2">
+                        🔄 다시 보기
                     </button>
                 </div>
             </div>
@@ -97,8 +100,7 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
-        // 조명
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
         dirLight.position.set(5, 10, 5);
@@ -114,11 +116,16 @@
             function (gltf) {
                 const model = gltf.scene;
 
-                // --- 1. 축 방향 강제 교정 (누워있는 강아지 세우기) ---
-                model.rotation.x = -Math.PI / 2; 
+                // --- 1. 축 방향 및 정면 강제 교정 ---
+                model.rotation.x = -Math.PI / 2; // 누워있는 강아지 세우기
+                
+                // 모델을 감싸는 wrapper를 만들어 정면을 보게 90도 회전
+                const wrapper = new THREE.Group();
+                wrapper.add(model);
+                wrapper.rotation.y = Math.PI / 2; 
 
                 // --- 2. 모델 자동 중앙 정렬 및 크기 맞춤 ---
-                const box = new THREE.Box3().setFromObject(model);
+                const box = new THREE.Box3().setFromObject(wrapper);
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
                 
@@ -126,13 +133,12 @@
                 const targetSize = 3.5; 
                 const scale = targetSize / maxDim;
                 
-                model.scale.setScalar(scale);
-                model.position.sub(center.multiplyScalar(scale)); 
-                model.position.y -= 0.5; 
+                wrapper.scale.setScalar(scale);
+                wrapper.position.sub(center.multiplyScalar(scale)); 
+                wrapper.position.y -= 0.5; 
 
-                dogGroup.add(model);
+                dogGroup.add(wrapper);
 
-                // 로딩 UI 숨기고 시작 버튼 표시
                 document.getElementById('loading-indicator').style.display = 'none';
                 document.getElementById('startBtn').classList.remove('hidden');
             },
@@ -143,11 +149,11 @@
             }
         );
 
-        // 3. 진드기 마커용 3D 좌표
+        // 3. 진드기 마커용 3D 좌표 (정면 바라보는 강아지 기준 재세팅)
         const markerPositions = [
-            new THREE.Vector3(0.8, 1.2, 0.8),   // 귀/목덜미 부근
-            new THREE.Vector3(0.5, 0.2, 1.5),   // 가슴/턱밑 부근
-            new THREE.Vector3(-0.6, -1.0, 1.2)  // 발/발가락 사이
+            new THREE.Vector3(0.5, 1.0, 0.5),   // 귀 뒤/목덜미 (약간 우측 상단)
+            new THREE.Vector3(0, 0.0, 1.2),     // 가슴/턱밑 (정중앙 전면)
+            new THREE.Vector3(0.3, -1.3, 0.8)   // 앞발가락 사이
         ];
 
         let htmlMarkers = [
@@ -156,11 +162,10 @@
             document.getElementById('marker3')
         ];
 
-        // 애니메이션 상태 관리
         let isAnimating = true;
         let isScenarioRunning = false;
 
-        // 4. 카메라 무빙(Tween.js) 함수
+        // 4. 카메라 무빙 함수
         function moveCamera(targetPos, lookAtPos, duration) {
             return new Promise(resolve => {
                 const startPos = camera.position.clone();
@@ -176,7 +181,6 @@
             });
         }
 
-        // 마커 화면 표시 함수
         function updateMarkerPosition(markerElement, pos3D) {
             const vector = pos3D.clone();
             vector.project(camera);
@@ -186,7 +190,6 @@
             markerElement.style.top = `${y}px`;
         }
 
-        // 텍스트 안내 함수
         const descBox = document.getElementById('descBox');
         const descText = document.getElementById('descText');
         function showDescription(text) {
@@ -194,12 +197,13 @@
             descBox.style.opacity = '1';
         }
 
-        // 5. 시나리오 실행 (시청하기 버튼 클릭)
-        document.getElementById('startBtn').addEventListener('click', async () => {
-            document.getElementById('startBtn').style.display = 'none';
+        // 5. 시나리오 실행 함수
+        async function runScenario() {
+            document.getElementById('startBtn').classList.add('hidden');
+            document.getElementById('eventModal').classList.add('hidden');
             isScenarioRunning = true;
 
-            // 모델을 정면으로 부드럽게 정렬
+            // 모델을 정면으로 정렬
             new TWEEN.Tween(dogGroup.rotation)
                 .to({ y: 0 }, 1000)
                 .easing(TWEEN.Easing.Quadratic.Out)
@@ -208,23 +212,23 @@
             await new Promise(r => setTimeout(r, 1000));
             isAnimating = false;
 
-            // Scene 1: 귀 뒤쪽
+            // Scene 1: 귀/목덜미
             showDescription('1. <b>귀 안쪽과 목덜미</b><br>풀숲을 산책할 때 가장 잘 붙어요!');
-            await moveCamera(new THREE.Vector3(2.5, 2.5, 4), markerPositions[0], 2000);
+            await moveCamera(new THREE.Vector3(1.5, 1.5, 3), markerPositions[0], 2000);
             htmlMarkers[0].style.display = 'block';
             await new Promise(r => setTimeout(r, 3000));
             htmlMarkers[0].style.display = 'none';
 
-            // Scene 2: 턱밑/가슴
+            // Scene 2: 가슴/턱밑
             showDescription('2. <b>턱 밑과 앞가슴</b><br>털이 촘촘해서 꼼꼼히 만져봐야 해요.');
-            await moveCamera(new THREE.Vector3(1.5, -0.5, 3.5), markerPositions[1], 2000);
+            await moveCamera(new THREE.Vector3(0, -0.5, 3), markerPositions[1], 2000);
             htmlMarkers[1].style.display = 'block';
             await new Promise(r => setTimeout(r, 3000));
             htmlMarkers[1].style.display = 'none';
 
             // Scene 3: 발가락
             showDescription('3. <b>발가락 사이</b><br>산책 후 발을 닦이며 꼭 확인하세요!');
-            await moveCamera(new THREE.Vector3(-2, -1, 3.5), markerPositions[2], 2000);
+            await moveCamera(new THREE.Vector3(1, -1.2, 2.5), markerPositions[2], 2000);
             htmlMarkers[2].style.display = 'block';
             await new Promise(r => setTimeout(r, 3000));
             htmlMarkers[2].style.display = 'none';
@@ -233,20 +237,23 @@
             descBox.style.opacity = '0';
             await moveCamera(new THREE.Vector3(0, 2, 8), new THREE.Vector3(0, 0, 0), 2000);
             isAnimating = true;
+            isScenarioRunning = false;
             document.getElementById('eventModal').classList.remove('hidden');
-        });
+        }
+
+        // 버튼 이벤트 연결
+        document.getElementById('startBtn').addEventListener('click', runScenario);
+        document.getElementById('replayBtn').addEventListener('click', runScenario);
 
         // 렌더링 루프
         function animate() {
             requestAnimationFrame(animate);
             TWEEN.update();
 
-            // 대기 상태일 때 빙글빙글 회전
             if (isAnimating) {
-                dogGroup.rotation.y += 0.01;
+                dogGroup.rotation.y += 0.01; // 대기 상태 회전
             }
 
-            // 시나리오 중일 때 마커 화면 좌표 지속 업데이트
             if (isScenarioRunning) {
                 if(htmlMarkers[0].style.display === 'block') updateMarkerPosition(htmlMarkers[0], markerPositions[0]);
                 if(htmlMarkers[1].style.display === 'block') updateMarkerPosition(htmlMarkers[1], markerPositions[1]);
@@ -257,7 +264,6 @@
         }
         animate();
 
-        // 창 크기 조절 대응
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
