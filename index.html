@@ -16,8 +16,8 @@
         
         /* 진드기 마커 컨테이너 */
         .tick-marker {
-            width: 65px;  /* 진드기 크기 확대 */
-            height: 65px; /* 진드기 크기 확대 */
+            width: 65px;
+            height: 65px;
             position: absolute;
             display: none;
             z-index: 5;
@@ -179,11 +179,12 @@
         );
 
         const markerPositions = [
-            new THREE.Vector3(1.18, 0.70, -0.21),
-            new THREE.Vector3(1.12, -0.10, 0.04),
-            new THREE.Vector3(0.73, -1.81, -0.22),
-            new THREE.Vector3(-1.47, 0.16, -0.10),
-            new THREE.Vector3(-0.08, -0.28, -0.39)
+            new THREE.Vector3(1.18, 0.70, -0.21),  // 1. 귀
+            new THREE.Vector3(1.12, -0.10, 0.04),  // 2. 목
+            new THREE.Vector3(0.73, -1.81, -0.22), // 3. 발가락
+            // [수정됨] 4. 꼬리 밑동 / 사타구니 안쪽 부근으로 X축과 Y축 깊이 조정
+            new THREE.Vector3(-1.15, -0.15, 0.0),  
+            new THREE.Vector3(-0.08, -0.28, -0.39) // 5. 몸 전체
         ];
 
         let htmlMarkers = [
@@ -270,8 +271,9 @@
             await new Promise(r => setTimeout(r, 2500));
             htmlMarkers[2].style.display = 'none';
 
-            showDescription('4. <b>꼬리</b><br>꼬리 안쪽과 주변 털 속도 숨기 좋은 곳이에요.');
-            await moveCamera(new THREE.Vector3(-3.0, 0.5, 3.5), markerPositions[3], 2000);
+            // [수정됨] 꼬리/항문/사타구니 설명 및 카메라 앵글 낮춤
+            showDescription('4. <b>꼬리 밑동과 사타구니</b><br>항문 주변과 사타구니 등 피부가 연한 곳에 잘 숨어요.');
+            await moveCamera(new THREE.Vector3(-3.0, -0.5, 3.0), markerPositions[3], 2000);
             htmlMarkers[3].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
             htmlMarkers[3].style.display = 'block';
             await new Promise(r => setTimeout(r, 2500));
