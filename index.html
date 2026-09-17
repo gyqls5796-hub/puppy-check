@@ -2,101 +2,297 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D 좌표 추출기</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>반려동물 진드기 체크</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #333; color: white; font-family: sans-serif; }
-        #info { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 8px; z-index: 10; font-size: 16px; line-height: 1.5; pointer-events: none; }
-        .coord { color: #4ade80; font-weight: bold; font-size: 18px; }
+        body { margin: 0; overflow: hidden; background-color: #f3f4f6; }
+        #canvas-container { width: 100%; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        .ui-layer { position: relative; z-index: 10; max-width: 430px; margin: 0 auto; height: 100vh; pointer-events: none; }
+        .pointer-events-auto { pointer-events: auto; }
+        .pulse-marker {
+            width: 20px; height: 20px;
+            background: rgba(239, 68, 68, 0.8);
+            border-radius: 50%;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            animation: pulse 1.5s infinite;
+            display: none;
+            z-index: 5;
+        }
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: translate(-50%, -50%) scale(1.5); box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .desc-box { transition: opacity 0.5s ease-in-out; }
     </style>
 </head>
 <body>
-    <div id="info">
-        <h3>🎯 진드기 마커 좌표 찾기</h3>
-        <p>1. 마우스(터치)로 강아지를 돌리고 확대해보세요.</p>
-        <p>2. 원하는 부위(귀, 가슴, 발가락)를 클릭하세요.</p>
-        <hr style="margin:10px 0; border-color:#555;">
-        <p>선택된 좌표: <br><span id="coordDisplay" class="coord">아직 클릭하지 않음</span></p>
+
+    <!-- 3D 렌더링 영역 -->
+    <div id="canvas-container"></div>
+    
+    <!-- HTML 마커 (총 5개) -->
+    <div id="marker1" class="pulse-marker"></div>
+    <div id="marker2" class="pulse-marker"></div>
+    <div id="marker3" class="pulse-marker"></div>
+    <div id="marker4" class="pulse-marker"></div>
+    <div id="marker5" class="pulse-marker"></div>
+
+    <!-- UI 영역 -->
+    <div class="ui-layer flex flex-col justify-between p-6">
+        
+        <!-- 상단 타이틀 -->
+        <div class="text-center mt-8 bg-white/80 backdrop-blur-sm p-4 rounded-2xl shadow-sm">
+            <h1 class="text-xl font-bold text-gray-800">🐶 진드기 체크 포인트</h1>
+            <p class="text-sm text-gray-500 mt-1">주요 호발 부위를 확인하세요</p>
+            <div id="loading-indicator" class="mt-3 text-red-500 font-semibold text-sm animate-pulse">
+                3D 모델을 불러오는 중입니다...
+            </div>
+        </div>
+
+        <!-- 하단 설명 & 버튼 영역 -->
+        <div class="mb-10">
+            <!-- 설명 텍스트 창 -->
+            <div id="descBox" class="desc-box opacity-0 bg-gray-800/90 text-white p-5 rounded-2xl mb-4 shadow-lg text-center">
+                <p id="descText" class="text-lg font-bold">진드기 확인 부위</p>
+            </div>
+
+            <!-- 시작 버튼 -->
+            <button id="startBtn" class="pointer-events-auto hidden w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-2xl shadow-lg transition-transform transform hover:scale-105 active:scale-95 text-lg">
+                ▶ 교육 영상 시청하기
+            </button>
+
+            <!-- 이벤트 모달 -->
+            <div id="eventModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-red-50">
+                <div class="text-4xl mb-3">🎁</div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">교육 완료!</h2>
+                <p class="text-gray-600 text-sm mb-5">채널을 추가하고 선물을 받아가세요!</p>
+                
+                <div class="space-y-3">
+                    <button onclick="window.open('https://instagram.com/지원단인스타아이디', '_blank')" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90">
+                        인스타그램 팔로우
+                    </button>
+                    <button onclick="window.open('https://youtube.com/@지원단유튜브아이디', '_blank')" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90">
+                        유튜브 구독하기
+                    </button>
+                    <button id="replayBtn" class="w-full flex items-center justify-center gap-2 bg-gray-500 text-white font-bold py-3 px-4 rounded-xl hover:bg-gray-600 mt-2">
+                        🔄 다시 보기
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
+
     <script>
+        const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
+        scene.background = new THREE.Color('#f3f4f6');
+
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.set(0, 2, 8);
+        camera.position.set(0, 2, 8); 
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
 
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
         dirLight.position.set(5, 10, 5);
         scene.add(dirLight);
 
-        // 모델 로드 (똑바로 세우기 적용)
         const dogGroup = new THREE.Group();
         scene.add(dogGroup);
 
         const loader = new THREE.GLTFLoader();
-        loader.load('3d puppy.glb', function (gltf) {
-            const model = gltf.scene;
-            model.rotation.x = -Math.PI / 2; // 강아지 세우기
-            
-            const wrapper = new THREE.Group();
-            wrapper.add(model);
-            wrapper.rotation.y = Math.PI / 2; // 정면 보기
+        loader.load(
+            '3d puppy.glb', 
+            function (gltf) {
+                const model = gltf.scene;
 
-            const box = new THREE.Box3().setFromObject(wrapper);
-            const center = box.getCenter(new THREE.Vector3());
-            const size = box.getSize(new THREE.Vector3());
-            
-            const scale = 3.5 / Math.max(size.x, size.y, size.z);
-            wrapper.scale.setScalar(scale);
-            wrapper.position.sub(center.multiplyScalar(scale)); 
-            wrapper.position.y -= 0.5; 
+                // 축 교정 및 정면 배치
+                model.rotation.x = -Math.PI / 2; 
+                const wrapper = new THREE.Group();
+                wrapper.add(model);
+                wrapper.rotation.y = Math.PI / 2; 
 
-            dogGroup.add(wrapper);
-        });
-
-        // 클릭 좌표 추출 (Raycaster)
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        
-        // 클릭한 곳에 임시로 빨간 공 생성
-        const sphereGeo = new THREE.SphereGeometry(0.1, 16, 16);
-        const sphereMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        let tempMarker = null;
-
-        window.addEventListener('click', (event) => {
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObject(dogGroup, true);
-
-            if (intersects.length > 0) {
-                const pt = intersects[0].point;
-                document.getElementById('coordDisplay').innerText = 
-                    `x: ${pt.x.toFixed(2)}, y: ${pt.y.toFixed(2)}, z: ${pt.z.toFixed(2)}`;
+                // 자동 스케일링
+                const box = new THREE.Box3().setFromObject(wrapper);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
                 
-                if (tempMarker) scene.remove(tempMarker);
-                tempMarker = new THREE.Mesh(sphereGeo, sphereMat);
-                tempMarker.position.copy(pt);
-                scene.add(tempMarker);
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const targetSize = 3.5; 
+                const scale = targetSize / maxDim;
+                
+                wrapper.scale.setScalar(scale);
+                wrapper.position.sub(center.multiplyScalar(scale)); 
+                wrapper.position.y -= 0.5; 
+
+                dogGroup.add(wrapper);
+
+                document.getElementById('loading-indicator').style.display = 'none';
+                document.getElementById('startBtn').classList.remove('hidden');
+            },
+            undefined,
+            function (error) {
+                console.error('모델 로드 실패:', error);
+                document.getElementById('loading-indicator').innerText = '모델 로드 실패. 파일명을 확인하세요.';
             }
-        });
+        );
+
+        // 직접 추출하신 5개의 좌표 적용
+        const markerPositions = [
+            new THREE.Vector3(1.18, 0.70, -0.21),  // 1. 귀 뒤/속
+            new THREE.Vector3(1.12, -0.10, 0.04),  // 2. 목 주변
+            new THREE.Vector3(0.73, -1.81, -0.22), // 3. 발가락 사이
+            new THREE.Vector3(-1.47, 0.16, -0.10), // 4. 꼬리
+            new THREE.Vector3(-0.08, -0.28, -0.39) // 5. 몸 전체
+        ];
+
+        let htmlMarkers = [
+            document.getElementById('marker1'),
+            document.getElementById('marker2'),
+            document.getElementById('marker3'),
+            document.getElementById('marker4'),
+            document.getElementById('marker5')
+        ];
+
+        let isAnimating = true;
+        let isScenarioRunning = false;
+
+        function moveCamera(targetPos, lookAtPos, duration) {
+            return new Promise(resolve => {
+                const startPos = camera.position.clone();
+                new TWEEN.Tween(startPos)
+                    .to(targetPos, duration)
+                    .easing(TWEEN.Easing.Cubic.InOut)
+                    .onUpdate(() => {
+                        camera.position.copy(startPos);
+                        camera.lookAt(lookAtPos);
+                    })
+                    .onComplete(resolve)
+                    .start();
+            });
+        }
+
+        function updateMarkerPosition(markerElement, pos3D) {
+            const vector = pos3D.clone();
+            vector.project(camera);
+            
+            // 카메라 뒤에 있는 마커는 숨김 처리
+            if (vector.z > 1) {
+                markerElement.style.opacity = '0';
+                return;
+            } else {
+                markerElement.style.opacity = '1';
+            }
+
+            const x = (vector.x * .5 + .5) * window.innerWidth;
+            const y = (vector.y * -.5 + .5) * window.innerHeight;
+            markerElement.style.left = `${x}px`;
+            markerElement.style.top = `${y}px`;
+        }
+
+        const descBox = document.getElementById('descBox');
+        const descText = document.getElementById('descText');
+        function showDescription(text) {
+            descText.innerHTML = text;
+            descBox.style.opacity = '1';
+        }
+
+        // 전체 5단계 시나리오 함수
+        async function runScenario() {
+            document.getElementById('startBtn').classList.add('hidden');
+            document.getElementById('eventModal').classList.add('hidden');
+            isScenarioRunning = true;
+            isAnimating = false; // 기본 회전 정지
+
+            // 정면 정렬
+            new TWEEN.Tween(dogGroup.rotation)
+                .to({ y: 0 }, 1000)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .start();
+
+            await new Promise(r => setTimeout(r, 1000));
+
+            // 1. 귀 뒤 또는 귀 속
+            showDescription('1. <b>귀 뒤 또는 귀 속</b><br>풀숲을 산책할 때 가장 먼저 닿는 곳이에요.');
+            await moveCamera(new THREE.Vector3(2.5, 1.2, 3.5), markerPositions[0], 2000);
+            htmlMarkers[0].style.display = 'block';
+            await new Promise(r => setTimeout(r, 2500));
+            htmlMarkers[0].style.display = 'none';
+
+            // 2. 목 주변
+            showDescription('2. <b>목 주변</b><br>목걸이나 하네스 안쪽을 잘 살펴보세요.');
+            await moveCamera(new THREE.Vector3(2.5, -0.2, 3.5), markerPositions[1], 1500);
+            htmlMarkers[1].style.display = 'block';
+            await new Promise(r => setTimeout(r, 2500));
+            htmlMarkers[1].style.display = 'none';
+
+            // 3. 발가락 사이
+            showDescription('3. <b>발가락 사이</b><br>산책 후 발바닥을 닦으며 꼼꼼히 확인하세요!');
+            await moveCamera(new THREE.Vector3(2.0, -1.5, 3.5), markerPositions[2], 1500);
+            htmlMarkers[2].style.display = 'block';
+            await new Promise(r => setTimeout(r, 2500));
+            htmlMarkers[2].style.display = 'none';
+
+            // 4. 꼬리
+            showDescription('4. <b>꼬리</b><br>꼬리 안쪽과 주변 털 속도 숨기 좋은 곳이에요.');
+            await moveCamera(new THREE.Vector3(-3.0, 0.5, 3.5), markerPositions[3], 2000);
+            htmlMarkers[3].style.display = 'block';
+            await new Promise(r => setTimeout(r, 2500));
+            htmlMarkers[3].style.display = 'none';
+
+            // 5. 몸 전체 확인
+            showDescription('5. <b>몸 전체 확인</b><br>털 안쪽 피부를 전체적으로 꼼꼼히 만져보세요.');
+            await moveCamera(new THREE.Vector3(0, 0.5, 6.0), markerPositions[4], 2000);
+            htmlMarkers[4].style.display = 'block';
+            await new Promise(r => setTimeout(r, 2500));
+            htmlMarkers[4].style.display = 'none';
+
+            // 종료 및 원상복구
+            descBox.style.opacity = '0';
+            await moveCamera(new THREE.Vector3(0, 2, 8), new THREE.Vector3(0, 0, 0), 2000);
+            isAnimating = true; // 다시 회전 시작
+            isScenarioRunning = false;
+            document.getElementById('eventModal').classList.remove('hidden');
+        }
+
+        document.getElementById('startBtn').addEventListener('click', runScenario);
+        document.getElementById('replayBtn').addEventListener('click', runScenario);
 
         function animate() {
             requestAnimationFrame(animate);
-            controls.update();
+            TWEEN.update();
+
+            if (isAnimating) {
+                dogGroup.rotation.y += 0.005; // 대기 중 천천히 회전
+            }
+
+            if (isScenarioRunning) {
+                for(let i=0; i<5; i++) {
+                    if(htmlMarkers[i].style.display === 'block') {
+                        updateMarkerPosition(htmlMarkers[i], markerPositions[i]);
+                    }
+                }
+            }
+
             renderer.render(scene, camera);
         }
         animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
