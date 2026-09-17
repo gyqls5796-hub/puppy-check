@@ -179,12 +179,11 @@
         );
 
         const markerPositions = [
-            new THREE.Vector3(1.18, 0.70, -0.21),  // 1. 귀
-            new THREE.Vector3(1.12, -0.10, 0.04),  // 2. 목
-            new THREE.Vector3(0.73, -1.81, -0.22), // 3. 발가락
-            // [수정됨] 4. 꼬리 밑동 / 사타구니 안쪽 (더 아래쪽, 더 뒤쪽으로 이동)
+            new THREE.Vector3(1.18, 0.70, -0.21),
+            new THREE.Vector3(1.12, -0.10, 0.04),
+            new THREE.Vector3(0.73, -1.81, -0.22),
             new THREE.Vector3(-1.35, -0.50, 0.0),  
-            new THREE.Vector3(-0.08, -0.28, -0.39) // 5. 몸 전체
+            new THREE.Vector3(-0.08, -0.28, -0.39)
         ];
 
         let htmlMarkers = [
@@ -271,7 +270,7 @@
             await new Promise(r => setTimeout(r, 2500));
             htmlMarkers[2].style.display = 'none';
 
-            showDescription('4. <b>꼬리 밑동과 사타구니</b><br>항문 주변과 사타구니 등 피부가 연한 곳에 잘 숨어요.');
+            showDescription('4. <b>꼬리 밑동과 사타구니</b><br>꼬리와 항문 주변 및 사타구니 등 피부가 연한 곳에 잘 숨어요.');
             await moveCamera(new THREE.Vector3(-3.0, -0.5, 3.0), markerPositions[3], 2000);
             htmlMarkers[3].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
             htmlMarkers[3].style.display = 'block';
