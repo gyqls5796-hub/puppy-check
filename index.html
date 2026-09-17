@@ -94,7 +94,9 @@
         scene.background = new THREE.Color('#f3f4f6');
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.set(0, 2, 8); 
+        // [수정됨] 카메라 높이를 낮추고, 강아지의 중심(y: -0.5)을 바라보게 설정하여 화면 중앙에 배치
+        camera.position.set(0, 0.5, 8); 
+        camera.lookAt(0, -0.5, 0);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -116,13 +118,11 @@
             function (gltf) {
                 const model = gltf.scene;
 
-                // 축 교정 및 정면 배치
                 model.rotation.x = -Math.PI / 2; 
                 const wrapper = new THREE.Group();
                 wrapper.add(model);
                 wrapper.rotation.y = Math.PI / 2; 
 
-                // 자동 스케일링
                 const box = new THREE.Box3().setFromObject(wrapper);
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
@@ -147,7 +147,6 @@
             }
         );
 
-        // 직접 추출하신 5개의 좌표 적용
         const markerPositions = [
             new THREE.Vector3(1.18, 0.70, -0.21),  // 1. 귀 뒤/속
             new THREE.Vector3(1.12, -0.10, 0.04),  // 2. 목 주변
@@ -186,7 +185,6 @@
             const vector = pos3D.clone();
             vector.project(camera);
             
-            // 카메라 뒤에 있는 마커는 숨김 처리
             if (vector.z > 1) {
                 markerElement.style.opacity = '0';
                 return;
@@ -207,14 +205,12 @@
             descBox.style.opacity = '1';
         }
 
-        // 전체 5단계 시나리오 함수
         async function runScenario() {
             document.getElementById('startBtn').classList.add('hidden');
             document.getElementById('eventModal').classList.add('hidden');
             isScenarioRunning = true;
-            isAnimating = false; // 기본 회전 정지
+            isAnimating = false;
 
-            // 정면 정렬
             new TWEEN.Tween(dogGroup.rotation)
                 .to({ y: 0 }, 1000)
                 .easing(TWEEN.Easing.Quadratic.Out)
@@ -257,10 +253,10 @@
             await new Promise(r => setTimeout(r, 2500));
             htmlMarkers[4].style.display = 'none';
 
-            // 종료 및 원상복구
             descBox.style.opacity = '0';
-            await moveCamera(new THREE.Vector3(0, 2, 8), new THREE.Vector3(0, 0, 0), 2000);
-            isAnimating = true; // 다시 회전 시작
+            // [수정됨] 종료 후에도 중앙을 보도록 초기값과 동일하게 맞춤
+            await moveCamera(new THREE.Vector3(0, 0.5, 8), new THREE.Vector3(0, -0.5, 0), 2000);
+            isAnimating = true; 
             isScenarioRunning = false;
             document.getElementById('eventModal').classList.remove('hidden');
         }
@@ -273,7 +269,7 @@
             TWEEN.update();
 
             if (isAnimating) {
-                dogGroup.rotation.y += 0.005; // 대기 중 천천히 회전
+                dogGroup.rotation.y += 0.005; 
             }
 
             if (isScenarioRunning) {
