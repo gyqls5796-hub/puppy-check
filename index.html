@@ -517,6 +517,7 @@
             document.getElementById('eventModal').classList.remove('hidden');
         }
 
+        // 메인 화면 복귀 시 입력값 완전 초기화
         function resetToHome() {
             document.getElementById('eventModal').classList.add('hidden');
             document.getElementById('gameScoreBoard').classList.add('hidden');
@@ -529,6 +530,12 @@
                 htmlMarkers[i].classList.remove('game-mode', 'video-mode');
             }
 
+            // 성별 및 연령 드롭박스 선택 초기화
+            genderSelect.value = '';
+            ageSelect.value = '';
+            userGender = '';
+            userAge = '';
+
             controls.enabled = false;
             camera.position.set(0, 0.5, 8);
             camera.lookAt(0, -0.5, 0);
@@ -539,7 +546,7 @@
             isGameMode = false;
             
             document.getElementById('menuButtons').classList.remove('hidden');
-            checkInputsValid();
+            checkInputsValid(); // 버튼을 다시 비활성화 상태로 갱신
         }
 
         document.getElementById('startVideoBtn').addEventListener('click', runVideoMode);
