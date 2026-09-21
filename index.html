@@ -148,7 +148,6 @@
                     <button id="startGameBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-all active:scale-95 text-base flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
                         🎮 숨은 진드기 잡기 게임
                     </button>
-                    <!-- 변경된 문구 반영 -->
                     <button id="startVideoBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 px-4 rounded-2xl shadow-md transition-all active:scale-95 text-sm flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
                         ▶ 반려동물 진드기 체크 부위 확인하기
                     </button>
@@ -159,10 +158,10 @@
                 </div>
             </div>
 
-            <!-- 최종 이벤트 모달 (공용) -->
+            <!-- 최종 이벤트 모달 -->
             <div id="eventModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-red-50">
                 <div class="text-4xl mb-2">🎉</div>
-                <h2 id="modalTitle" class="text-2xl font-black text-gray-800 mb-1">모두 완료!</h2>
+                <h2 id="modalTitle" class="text-2xl font-black text-gray-800 mb-1">참여 완료!</h2>
                 <p id="modalDesc" class="text-gray-600 text-xs mb-4">선물 수령을 위해 아래 채널을 추가해 주세요!</p>
                 
                 <div class="space-y-2.5">
@@ -366,11 +365,15 @@
                 return;
             }
 
-            occlusionRaycaster.set(camera.position, dir);
-            const intersects = occlusionRaycaster.intersectObject(dogGroup, true);
-            if (intersects.length > 0 && intersects[0].distance < dist - 0.12) {
-                markerElement.style.display = 'none';
-                return;
+            // [수정됨] 영상 모드에서는 가림 판정(Occlusion)을 무시하여 파묻힌 마커도 확실히 보이도록 보장합니다.
+            // 게임 모드에서만 가림 판정을 실행하되, 모델 피부 두께를 고려해 허용 오차를 넉넉히(0.45) 줍니다.
+            if (isGameMode) {
+                occlusionRaycaster.set(camera.position, dir);
+                const intersects = occlusionRaycaster.intersectObject(dogGroup, true);
+                if (intersects.length > 0 && intersects[0].distance < dist - 0.45) {
+                    markerElement.style.display = 'none';
+                    return;
+                }
             }
 
             const dynamicScale = Math.min(Math.max(6.0 / dist, 0.8), 3.0);
@@ -391,7 +394,6 @@
             descBox.style.opacity = '1';
         }
 
-        // --- 1. 체크 부위 확인 영상 모드 ---
         async function runVideoMode() {
             if (!checkInputsValid()) {
                 alert('상단에서 성별과 연령대를 먼저 선택해주세요!');
@@ -445,7 +447,6 @@
             document.getElementById('eventModal').classList.remove('hidden');
         }
 
-        // --- 2. 숨은 진드기 잡기 게임 모드 ---
         async function runGameMode() {
             if (!checkInputsValid()) {
                 alert('상단에서 성별과 연령대를 먼저 선택해주세요!');
@@ -501,7 +502,6 @@
             });
         });
 
-        // 게임 완료 시 모달 텍스트 수정 후 팝업
         async function endGame() {
             isGameMode = false;
             controls.enabled = false;
