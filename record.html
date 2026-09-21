@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>진드기 예방 가이드 (녹화용)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #f3f4f6; user-select: none; -webkit-user-select: none; }
+        #canvas-container { width: 100%; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        .ui-layer { position: relative; z-index: 10; max-width: 430px; margin: 0 auto; height: 100vh; pointer-events: none; display: flex; flex-direction: column; justify-content: flex-end; padding: 24px; }
+        
+        .tick-marker {
+            position: absolute;
+            display: none;
+            z-index: 20;
+            --rot: 0deg;
+            width: 65px;
+            height: 65px;
+            background-image: url('tick.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: bounce-tick 0.8s infinite alternate;
+            filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.8)) drop-shadow(0 0 12px rgba(255, 0, 0, 0.6));
+        }
+
+        .tick-marker::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 100%; height: 100%;
+            background: rgba(239, 68, 68, 0.25);
+            border: 2px solid rgba(239, 68, 68, 0.8);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            animation: pulse-ring 1.2s infinite ease-out;
+        }
+
+        @keyframes bounce-tick {
+            0% { transform: translate(-50%, -50%) rotate(var(--rot)) scale(1); }
+            100% { transform: translate(-50%, -50%) rotate(var(--rot)) scale(1.2); }
+        }
+
+        @keyframes pulse-ring {
+            0% { width: 100%; height: 100%; opacity: 1; }
+            100% { width: 200%; height: 200%; opacity: 0; }
+        }
+
+        .desc-box { transition: opacity 0.5s ease-in-out; }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    
+    <div id="marker1" class="tick-marker"></div>
+    <div id="marker2" class="tick-marker"></div>
+    <div id="marker3" class="tick-marker"></div>
+    <div id="marker4" class="tick-marker"></div>
+    <div id="marker5" class="tick-marker"></div>
+
+    <div id="startOverlay" class="absolute top-0 left-0 w-full h-full flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-500">
+        <div class="text-white text-center">
+            <div id="loadingText" class="text-lg font-bold animate-pulse">3D 모델을 불러오는 중...</div>
+            <div id="startText" class="hidden text-xl font-bold bg-amber-500 px-6 py-3 rounded-full shadow-lg cursor-pointer animate-bounce">
+                👆 화면을 터치하면 녹화용 영상이 시작됩니다
+            </div>
+        </div>
+    </div>
+
+    <div class="ui-layer">
+        <div id="descBox" class="desc-box opacity-0 bg-gray-900/90 text-white p-5 rounded-2xl mb-8 shadow-2xl text-center border border-gray-700">
+            <p id="descText" class="text-lg font-semibold leading-relaxed"></p>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color('#f3f4f6');
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0.5, 8); 
+        camera.lookAt(0, -0.5, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(5, 10, 5);
+        scene.add(dirLight);
+
+        const dogGroup = new THREE.Group();
+        scene.add(dogGroup);
+
+        const loader = new THREE.GLTFLoader();
+        loader.load('3d puppy.glb', function (gltf) {
+            const model = gltf.scene;
+            model.rotation.x = -Math.PI / 2; 
+            const wrapper = new THREE.Group();
+            wrapper.add(model);
+            wrapper.rotation.y = Math.PI / 2; 
+
+            const box = new THREE.Box3().setFromObject(wrapper);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const scale = 3.5 / Math.max(size.x, size.y, size.z);
+            
+            wrapper.scale.setScalar(scale);
+            wrapper.position.sub(center.multiplyScalar(scale)); 
+            wrapper.position.y -= 0.5; 
+
+            dogGroup.add(wrapper);
+
+            document.getElementById('loadingText').classList.add('hidden');
+            const startText = document.getElementById('startText');
+            startText.classList.remove('hidden');
+            
+            // 화면을 터치하면 오버레이가 사라지고 시퀀스 시작
+            document.getElementById('startOverlay').addEventListener('click', function() {
+                this.style.opacity = '0';
+                setTimeout(() => {
+                    this.style.display = 'none';
+                    runRecordingSequence();
+                }, 500);
+            });
+        });
+
+        const markerPositions = [
+            new THREE.Vector3(1.18, 0.70, -0.21),
+            new THREE.Vector3(1.12, -0.10, 0.04),
+            new THREE.Vector3(0.73, -1.81, -0.22),
+            new THREE.Vector3(-1.35, -0.50, 0.0),
+            new THREE.Vector3(-0.08, -0.28, -0.39)
+        ];
+
+        const markerDescriptions = [
+            '<span class="text-amber-400 font-bold text-xl mb-1 block">1. 귀 뒤 또는 귀 속</span>풀숲을 산책할 때 가장 먼저 닿는 곳이에요.',
+            '<span class="text-amber-400 font-bold text-xl mb-1 block">2. 목 주변</span>목걸이나 하네스 안쪽을 잘 살펴보세요.',
+            '<span class="text-amber-400 font-bold text-xl mb-1 block">3. 발가락 사이</span>산책 후 발바닥을 닦으며 꼼꼼히 확인하세요!',
+            '<span class="text-amber-400 font-bold text-xl mb-1 block">4. 꼬리 밑동과 사타구니</span>피부가 연하고 접히는 곳에 잘 숨어요.',
+            '<span class="text-amber-400 font-bold text-xl mb-1 block">5. 몸 전체 확인</span>털 안쪽 피부를 전체적으로 꼼꼼히 만져보세요.'
+        ];
+
+        let htmlMarkers = [
+            document.getElementById('marker1'),
+            document.getElementById('marker2'),
+            document.getElementById('marker3'),
+            document.getElementById('marker4'),
+            document.getElementById('marker5')
+        ];
+
+        let isIdle = true;
+        let isVideoMode = false;
+        let activeTickFlags = [false, false, false, false, false];
+
+        function moveCamera(targetPos, lookAtPos, duration) {
+            return new Promise(resolve => {
+                const startPos = camera.position.clone();
+                new TWEEN.Tween(startPos)
+                    .to(targetPos, duration)
+                    .easing(TWEEN.Easing.Cubic.InOut)
+                    .onUpdate(() => {
+                        camera.position.copy(startPos);
+                        camera.lookAt(lookAtPos);
+                    })
+                    .onComplete(() => {
+                        camera.lookAt(lookAtPos);
+                        resolve();
+                    })
+                    .start();
+            });
+        }
+
+        function updateMarkerPosition(markerElement, localPos) {
+            const worldPos = localPos.clone().applyMatrix4(dogGroup.matrixWorld);
+            const vector = worldPos.clone().project(camera);
+            const x = (vector.x * .5 + .5) * window.innerWidth;
+            const y = (vector.y * -.5 + .5) * window.innerHeight;
+            markerElement.style.left = `${x}px`;
+            markerElement.style.top = `${y}px`;
+            markerElement.style.display = 'block';
+        }
+
+        const descBox = document.getElementById('descBox');
+        const descText = document.getElementById('descText');
+        function showDescription(text) {
+            descText.innerHTML = text;
+            descBox.style.opacity = '1';
+        }
+
+        async function runRecordingSequence() {
+            isIdle = false;
+            isVideoMode = true;
+
+            new TWEEN.Tween(dogGroup.rotation).to({ y: 0 }, 1000).easing(TWEEN.Easing.Quadratic.Out).start();
+            await new Promise(r => setTimeout(r, 1000));
+
+            const cameraAngles = [
+                new THREE.Vector3(2.5, 1.2, 3.5),
+                new THREE.Vector3(2.5, -0.2, 3.5),
+                new THREE.Vector3(2.0, -1.5, 3.5),
+                new THREE.Vector3(-3.0, -0.5, 3.0),
+                new THREE.Vector3(0, 0.5, 6.0)
+            ];
+
+            for (let i = 0; i < 5; i++) {
+                showDescription(markerDescriptions[i]);
+                await moveCamera(cameraAngles[i], markerPositions[i], 1800);
+                activeTickFlags[i] = true;
+                htmlMarkers[i].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
+                
+                // 나레이션을 넣을 수 있도록 각 컷마다 3.5초 대기 (기존보다 약간 여유 있게)
+                await new Promise(r => setTimeout(r, 3500)); 
+                
+                activeTickFlags[i] = false;
+                htmlMarkers[i].style.display = 'none';
+                descBox.style.opacity = '0';
+                await new Promise(r => setTimeout(r, 500)); 
+            }
+
+            // 마무리 카메라 무빙
+            await moveCamera(new THREE.Vector3(0, 0.5, 8), new THREE.Vector3(0, -0.5, 0), 2000);
+            isIdle = true;
+            isVideoMode = false;
+            
+            // 영상 끝났음을 알리는 텍스트
+            showDescription('<span class="text-amber-400 font-bold text-xl block">진드기 체크, 잊지 마세요!</span>산책 후엔 꼼꼼한 확인 필수! 🐶');
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            TWEEN.update();
+
+            if (isIdle) {
+                dogGroup.rotation.y += 0.005; // 부드럽게 회전
+            }
+
+            if (isVideoMode) {
+                for (let i = 0; i < 5; i++) {
+                    if (activeTickFlags[i]) {
+                        updateMarkerPosition(htmlMarkers[i], markerPositions[i]);
+                    }
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
