@@ -67,8 +67,9 @@
     <div id="startOverlay" class="absolute top-0 left-0 w-full h-full flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-500">
         <div class="text-white text-center">
             <div id="loadingText" class="text-lg font-bold animate-pulse">3D 모델을 불러오는 중...</div>
-            <div id="startText" class="hidden text-xl font-bold bg-amber-500 px-6 py-3 rounded-full shadow-lg cursor-pointer animate-bounce">
-                👆 화면을 터치하면 녹화용 영상이 시작됩니다
+            <!-- [수정됨] 녹화 영상 오프닝용 문구 변경 및 두 줄 정렬 -->
+            <div id="startText" class="hidden text-xl font-bold bg-amber-500 px-8 py-4 rounded-3xl shadow-lg cursor-pointer animate-bounce text-center leading-snug">
+                반려동물 진드기 체크 부위<br>확인해 보실까요? 🐶
             </div>
         </div>
     </div>
@@ -219,7 +220,7 @@
                 activeTickFlags[i] = true;
                 htmlMarkers[i].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
                 
-                // 나레이션을 넣을 수 있도록 각 컷마다 3.5초 대기 (기존보다 약간 여유 있게)
+                // 나레이션을 넣을 수 있도록 각 컷마다 3.5초 대기
                 await new Promise(r => setTimeout(r, 3500)); 
                 
                 activeTickFlags[i] = false;
