@@ -91,7 +91,7 @@
     <div id="marker5" class="tick-marker pointer-events-auto"></div>
 
     <div class="ui-layer flex flex-col justify-between p-6">
-        <!-- 상단 헤더 영역 (타이틀 + 성별/나이 드롭박스) -->
+        <!-- 상단 헤더 영역 -->
         <div class="mt-4 space-y-2">
             <!-- 타이틀 카드 -->
             <div class="text-center bg-white/90 backdrop-blur-sm p-3.5 rounded-2xl shadow-sm border border-gray-100">
@@ -136,7 +136,7 @@
             </div>
         </div>
 
-        <!-- 하단 영역 (버튼 및 확대된 로고) -->
+        <!-- 하단 영역 (버튼 및 로고) -->
         <div class="mb-4">
             <div id="descBox" class="desc-box opacity-0 bg-gray-900/90 text-white p-4 rounded-2xl mb-3 shadow-lg text-center">
                 <p id="descText" class="text-base font-semibold leading-snug"></p>
@@ -148,8 +148,9 @@
                     <button id="startGameBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-all active:scale-95 text-base flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
                         🎮 숨은 진드기 잡기 게임
                     </button>
-                    <button id="startVideoBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-2xl shadow-md transition-all active:scale-95 text-sm flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
-                        ▶ 3D 안내 가이드 보기
+                    <!-- [수정됨] 문구 변경 -->
+                    <button id="startVideoBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 px-4 rounded-2xl shadow-md transition-all active:scale-95 text-sm flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
+                        ▶ 반려동물 진드기 체크 부위 확인하기
                     </button>
                 </div>
                 <!-- 첫 화면 하단 지원단 로고 -->
@@ -158,11 +159,21 @@
                 </div>
             </div>
 
-            <!-- 이벤트 모달 -->
+            <!-- [추가됨] 영상 시청 완료 후 게임 유도 모달 -->
+            <div id="videoToGameModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-amber-50">
+                <div class="text-4xl mb-2">🎓</div>
+                <h2 class="text-xl font-black text-gray-800 mb-1">체크 부위 확인 완료!</h2>
+                <p class="text-gray-600 text-xs mb-4">이제 강아지 몸에 숨은 진드기 5마리를 찾아 잡아보세요!</p>
+                <button id="nextToGameBtn" class="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-md text-sm active:scale-95">
+                    🎮 진드기 잡기 게임 시작하기
+                </button>
+            </div>
+
+            <!-- 최종 이벤트 모달 (게임 완료 후에만 노출) -->
             <div id="eventModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-red-50">
                 <div class="text-4xl mb-2">🎉</div>
-                <h2 id="modalTitle" class="text-2xl font-black text-gray-800 mb-1">모두 퇴치 완료!</h2>
-                <p id="modalDesc" class="text-gray-600 text-xs mb-4">채널을 추가하고 현장 선물을 수령하세요!</p>
+                <h2 id="modalTitle" class="text-2xl font-black text-gray-800 mb-1">진드기 완벽 퇴치!</h2>
+                <p id="modalDesc" class="text-gray-600 text-xs mb-4">선물 수령을 위해 아래 채널을 추가해 주세요!</p>
                 
                 <div class="space-y-2.5">
                     <button id="instaBtn" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md text-sm active:scale-95">
@@ -172,13 +183,12 @@
                         유튜브 구독하기
                     </button>
                     
-                    <!-- 지원단 홈페이지 바로가기 버튼 -->
                     <button onclick="window.open('http://gncdc.or.kr/', '_blank')" title="경상남도감염병관리지원단 홈페이지 바로가기" class="w-full flex items-center justify-center bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 py-3 px-4 rounded-xl shadow-sm transition-all active:scale-95">
                         <img src="logo.png" alt="경상남도감염병관리지원단 홈페이지 이동" class="h-10 max-w-[260px] w-auto object-contain">
                     </button>
                     
                     <button id="replayBtn" class="w-full flex items-center justify-center gap-2 bg-gray-600 text-white font-bold py-2.5 px-4 rounded-xl hover:bg-gray-700 text-xs mt-1">
-                        🔄 메인으로 돌아가기
+                        🔄 처음으로 돌아가기
                     </button>
                 </div>
             </div>
@@ -186,10 +196,8 @@
     </div>
 
     <script>
-        // 구글 앱스 스크립트 웹 앱 URL
         const GOOGLE_SHEET_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby2irHshS-7F04tlUAipYDwJhHdsyq4RgIMtAyhV4WyFiCnhc4Q-0MW7JBLZmRhudf8RA/exec';
 
-        // 3D 렌더링 및 씬 초기화
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         scene.background = new THREE.Color('#f3f4f6');
@@ -220,7 +228,6 @@
         const dogGroup = new THREE.Group();
         scene.add(dogGroup);
 
-        // 3D 모델 불러오기
         const loader = new THREE.GLTFLoader();
         loader.load(
             '3d puppy.glb', 
@@ -285,7 +292,6 @@
         let activeTickFlags = [false, false, false, false, false];
         let remainTicks = 5;
 
-        // 드롭박스 요소 및 검증
         let userGender = '';
         let userAge = '';
         const genderSelect = document.getElementById('genderSelect');
@@ -293,6 +299,7 @@
         const startGameBtn = document.getElementById('startGameBtn');
         const startVideoBtn = document.getElementById('startVideoBtn');
         const userInfoSection = document.getElementById('userInfoSection');
+        const videoToGameModal = document.getElementById('videoToGameModal');
 
         function checkInputsValid() {
             userGender = genderSelect.value;
@@ -312,7 +319,6 @@
         genderSelect.addEventListener('change', checkInputsValid);
         ageSelect.addEventListener('change', checkInputsValid);
 
-        // 구글 시트 통계 전송
         function sendStatsToGoogleSheet(choiceType) {
             if (!GOOGLE_SHEET_WEBAPP_URL) return;
 
@@ -396,6 +402,7 @@
             descBox.style.opacity = '1';
         }
 
+        // --- 1. 체크 부위 확인 영상 모드 ---
         async function runVideoMode() {
             if (!checkInputsValid()) {
                 alert('상단에서 성별과 연령대를 먼저 선택해주세요!');
@@ -404,6 +411,7 @@
 
             document.getElementById('menuButtons').classList.add('hidden');
             userInfoSection.classList.add('hidden');
+            videoToGameModal.classList.add('hidden');
             document.getElementById('eventModal').classList.add('hidden');
             isIdle = false;
             isVideoMode = true;
@@ -443,11 +451,12 @@
             
             isVideoMode = false;
             isIdle = true;
-            document.getElementById('modalTitle').innerText = '교육 완료!';
-            document.getElementById('modalDesc').innerText = '채널을 추가하고 선물을 받아가세요!';
-            document.getElementById('eventModal').classList.remove('hidden');
+
+            // [수정됨] 영상 완료 시 인스타/유튜브 모달이 아닌 게임 유도 모달 노출!
+            videoToGameModal.classList.remove('hidden');
         }
 
+        // --- 2. 숨은 진드기 잡기 게임 모드 ---
         async function runGameMode() {
             if (!checkInputsValid()) {
                 alert('상단에서 성별과 연령대를 먼저 선택해주세요!');
@@ -456,6 +465,7 @@
 
             document.getElementById('menuButtons').classList.add('hidden');
             userInfoSection.classList.add('hidden');
+            videoToGameModal.classList.add('hidden');
             document.getElementById('eventModal').classList.add('hidden');
             isIdle = false;
             isGameMode = true;
@@ -503,6 +513,7 @@
             });
         });
 
+        // 게임을 끝내야만 최종 선물 모달 노출
         async function endGame() {
             isGameMode = false;
             controls.enabled = false;
@@ -517,9 +528,9 @@
             document.getElementById('eventModal').classList.remove('hidden');
         }
 
-        // 메인 화면 복귀 시 입력값 완전 초기화
         function resetToHome() {
             document.getElementById('eventModal').classList.add('hidden');
+            videoToGameModal.classList.add('hidden');
             document.getElementById('gameScoreBoard').classList.add('hidden');
             userInfoSection.classList.remove('hidden');
             descBox.style.opacity = '0';
@@ -530,7 +541,6 @@
                 htmlMarkers[i].classList.remove('game-mode', 'video-mode');
             }
 
-            // 성별 및 연령 드롭박스 선택 초기화
             genderSelect.value = '';
             ageSelect.value = '';
             userGender = '';
@@ -546,11 +556,12 @@
             isGameMode = false;
             
             document.getElementById('menuButtons').classList.remove('hidden');
-            checkInputsValid(); // 버튼을 다시 비활성화 상태로 갱신
+            checkInputsValid();
         }
 
         document.getElementById('startVideoBtn').addEventListener('click', runVideoMode);
         document.getElementById('startGameBtn').addEventListener('click', runGameMode);
+        document.getElementById('nextToGameBtn').addEventListener('click', runGameMode);
         document.getElementById('replayBtn').addEventListener('click', resetToHome);
 
         function animate() {
