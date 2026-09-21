@@ -78,18 +78,6 @@
         }
 
         .desc-box { transition: opacity 0.5s ease-in-out; }
-
-        /* 로고에서 방패 심볼 마크만 추출하여 아이콘으로 쓰는 스타일 */
-        .logo-shield-icon {
-            width: 22px;
-            height: 22px;
-            background-image: url('logo.png');
-            background-size: auto 100%; /* 높이를 맞추고 */
-            background-position: left center; /* 왼쪽 방패 부분에 초점 */
-            background-repeat: no-repeat;
-            display: inline-block;
-            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
-        }
     </style>
 </head>
 <body>
@@ -136,7 +124,7 @@
                         ▶ 3D 안내 가이드 보기
                     </button>
                 </div>
-                <!-- 하단 지원단 로고 -->
+                <!-- 첫 화면 하단 지원단 로고 -->
                 <div class="flex justify-center items-center py-1">
                     <img src="logo.png" alt="지원단 로고" class="h-9 max-w-[200px] object-contain drop-shadow-sm opacity-90" onerror="this.style.display='none'">
                 </div>
@@ -152,14 +140,13 @@
                     <button onclick="window.open('https://www.instagram.com/gncdc_2019/', '_blank')" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md text-sm">
                         인스타그램 팔로우
                     </button>
-                    <button onclick="window.open('https://www.youtube.com/@%EA%B2%BD%EC%83%81%EB%82%A8%EB%8F%84%EA%B0%90%EC%97%BC%EB%B3%91%EA%B4%80%EB%A6%AC%EC%A7%80', '_blank')" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md text-sm">
+                    <button onclick="window.open('https://youtube.com/@%EA%B2%BD%EC%83%81%EB%82%A8%EB%8F%84%EA%B0%90%EC%97%BC%EB%B3%91%EA%B4%80%EB%A6%AC%EC%A7%80', '_blank')" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md text-sm">
                         유튜브 구독하기
                     </button>
                     
-                    <!-- [수정됨] 지구 아이콘 대신 logo.png의 방패 심볼을 아이콘으로 적용 -->
-                    <button onclick="window.open('http://gncdc.or.kr/', '_blank')" class="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-emerald-700 shadow-md text-sm">
-                        <span class="logo-shield-icon"></span>
-                        지원단 홈페이지 방문하기
+                    <!-- [수정됨] 글자 없이 로고만 깔끔하게 들어간 화이트 카드형 홈페이지 바로가기 버튼 -->
+                    <button onclick="window.open('http://gncdc.or.kr/', '_blank')" title="경상남도감염병관리지원단 홈페이지 바로가기" class="w-full flex items-center justify-center bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 py-2.5 px-4 rounded-xl shadow-sm transition-all active:scale-95">
+                        <img src="logo.png" alt="경상남도감염병관리지원단 홈페이지 이동" class="h-7 max-w-[220px] object-contain">
                     </button>
                     
                     <button id="replayBtn" class="w-full flex items-center justify-center gap-2 bg-gray-600 text-white font-bold py-2.5 px-4 rounded-xl hover:bg-gray-700 text-xs mt-1">
