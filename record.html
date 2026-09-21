@@ -67,7 +67,7 @@
     <div id="startOverlay" class="absolute top-0 left-0 w-full h-full flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-500">
         <div class="text-white text-center">
             <div id="loadingText" class="text-lg font-bold animate-pulse">3D 모델을 불러오는 중...</div>
-            <div id="startText" class="hidden text-xl font-bold bg-amber-500 px-8 py-4 rounded-3xl shadow-lg cursor-pointer animate-bounce text-center leading-snug">
+            <div id="startText" class="hidden text-xl font-bold bg-yellow-400 text-gray-900 px-8 py-4 rounded-3xl shadow-lg cursor-pointer animate-bounce text-center leading-snug">
                 반려동물 진드기 체크 부위<br>확인해 보실까요? 🐶
             </div>
         </div>
@@ -125,7 +125,6 @@
             const startText = document.getElementById('startText');
             startText.classList.remove('hidden');
             
-            // 화면을 터치하면 오버레이가 사라지고 시퀀스 시작
             document.getElementById('startOverlay').addEventListener('click', function() {
                 this.style.opacity = '0';
                 setTimeout(() => {
@@ -143,12 +142,13 @@
             new THREE.Vector3(-0.08, -0.28, -0.39)
         ];
 
+        // [수정됨] 제목 색상을 개나리색(text-yellow-400)으로 변경 및 4, 5번 문구/줄바꿈 수정
         const markerDescriptions = [
-            '<span class="text-amber-400 font-bold text-xl mb-1 block">1. 귀 뒤 또는 귀 속</span>풀숲을 산책할 때 가장 먼저 닿는 곳이에요.',
-            '<span class="text-amber-400 font-bold text-xl mb-1 block">2. 목 주변</span>목걸이나 하네스 안쪽을 잘 살펴보세요.',
-            '<span class="text-amber-400 font-bold text-xl mb-1 block">3. 발가락 사이</span>산책 후 발바닥을 닦으며 꼼꼼히 확인하세요!',
-            '<span class="text-amber-400 font-bold text-xl mb-1 block">4. 꼬리 밑동과 사타구니</span>꼬리와 항문 주변 등 피부가 연한 곳에 잘 숨어요.',
-            '<span class="text-amber-400 font-bold text-xl mb-1 block">5. 몸 전체 확인</span>털 안쪽 피부를 전체적으로<br>꼼꼼히 만져보세요.'
+            '<span class="text-yellow-400 font-bold text-xl mb-1 block">1. 귀 뒤 또는 귀 속</span>풀숲을 산책할 때 가장 먼저 닿는 곳이에요.',
+            '<span class="text-yellow-400 font-bold text-xl mb-1 block">2. 목 주변</span>목걸이나 하네스 안쪽을 잘 살펴보세요.',
+            '<span class="text-yellow-400 font-bold text-xl mb-1 block">3. 발가락 사이</span>산책 후 발바닥을 닦으며 꼼꼼히 확인하세요!',
+            '<span class="text-yellow-400 font-bold text-xl mb-1 block">4. 꼬리 밑동과 사타구니</span>꼬리와 항문 주변 및 사타구니 등<br>피부가 연한 곳에 잘 숨어요.',
+            '<span class="text-yellow-400 font-bold text-xl mb-1 block">5. 몸 전체 확인</span>털 안쪽 피부를 전체적으로<br>꼼꼼히 살펴보세요.'
         ];
 
         let htmlMarkers = [
@@ -219,7 +219,6 @@
                 activeTickFlags[i] = true;
                 htmlMarkers[i].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
                 
-                // 나레이션을 넣을 수 있도록 각 컷마다 3.5초 대기
                 await new Promise(r => setTimeout(r, 3500)); 
                 
                 activeTickFlags[i] = false;
@@ -228,13 +227,11 @@
                 await new Promise(r => setTimeout(r, 500)); 
             }
 
-            // 마무리 카메라 무빙
             await moveCamera(new THREE.Vector3(0, 0.5, 8), new THREE.Vector3(0, -0.5, 0), 2000);
             isIdle = true;
             isVideoMode = false;
             
-            // 영상 끝났음을 알리는 텍스트
-            showDescription('<span class="text-amber-400 font-bold text-xl block">진드기 체크, 잊지 마세요!</span>산책 후엔 꼼꼼한 확인 필수! 🐶');
+            showDescription('<span class="text-yellow-400 font-bold text-xl block">진드기 체크, 잊지 마세요!</span>산책 후엔 꼼꼼한 확인 필수! 🐶');
         }
 
         function animate() {
@@ -242,7 +239,7 @@
             TWEEN.update();
 
             if (isIdle) {
-                dogGroup.rotation.y += 0.005; // 부드럽게 회전
+                dogGroup.rotation.y += 0.005; 
             }
 
             if (isVideoMode) {
