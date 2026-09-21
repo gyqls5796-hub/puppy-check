@@ -15,7 +15,6 @@
         .ui-layer { position: relative; z-index: 10; max-width: 430px; margin: 0 auto; height: 100vh; pointer-events: none; }
         .pointer-events-auto { pointer-events: auto; }
         
-        /* 기본 진드기 마커 스타일 */
         .tick-marker {
             position: absolute;
             display: none;
@@ -24,7 +23,6 @@
             --rot: 0deg;
         }
 
-        /* [영상 모드] - 잘 보이도록 강조 */
         .tick-marker.video-mode {
             width: 65px;
             height: 65px;
@@ -49,21 +47,20 @@
             animation: pulse-ring 1.2s infinite ease-out;
         }
 
-        /* [게임 모드] - 약 1/5 크기(12px), 붉은 원 및 테두리 효과 완전 제거 */
         .tick-marker.game-mode {
-            width: 40px;  /* 터치가 잘 되도록 터치 영역은 40px 유지 */
+            width: 40px;
             height: 40px;
             background-image: url('tick.png');
-            background-size: 12px 12px; /* 실제 보이는 진드기 크기는 12px */
+            background-size: 12px 12px;
             background-repeat: no-repeat;
             background-position: center;
             transform: translate(-50%, -50%) rotate(var(--rot));
-            filter: none; /* 빨간 번짐 제거 */
-            animation: none; /* 펄스 제거 */
+            filter: none;
+            animation: none;
         }
 
         .tick-marker.game-mode::after {
-            display: none; /* 붉은색 펄스 링 삭제 */
+            display: none;
         }
 
         @keyframes bounce-tick {
@@ -129,7 +126,7 @@
                     <button onclick="window.open('https://www.instagram.com/gncdc_2019/', '_blank')" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md text-sm">
                         인스타그램 팔로우
                     </button>
-                    <button onclick="window.open('https://www.youtube.com/@%EA%B2%BD%EC%83%81%EB%82%A8%EB%8F%84%EA%B0%90%EC%97%BC%EB%B3%91%EA%B4%80%EB%A6%AC%EC%A7%80', '_blank')" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md text-sm">
+                    <button onclick="window.open('https://youtube.com/@%EA%B2%BD%EC%83%81%EB%82%A8%EB%8F%84%EA%B0%90%EC%97%BC%EB%B3%91%EA%B4%80%EB%A6%AC%EC%A7%80', '_blank')" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md text-sm">
                         유튜브 구독하기
                     </button>
                     <button id="replayBtn" class="w-full flex items-center justify-center gap-2 bg-gray-600 text-white font-bold py-2.5 px-4 rounded-xl hover:bg-gray-700 text-xs mt-1">
@@ -236,6 +233,9 @@
         let activeTickFlags = [false, false, false, false, false];
         let remainTicks = 5;
 
+        // 가림 판정용 Raycaster
+        const occlusionRaycaster = new THREE.Raycaster();
+
         function moveCamera(targetPos, lookAtPos, duration) {
             return new Promise(resolve => {
                 const startPos = camera.position.clone();
@@ -254,15 +254,28 @@
             });
         }
 
+        // 몸체 차폐 감지(Raycasting)가 적용된 마커 위치 갱신
         function updateMarkerPosition(markerElement, localPos) {
             const worldPos = localPos.clone().applyMatrix4(dogGroup.matrixWorld);
             
-            const toMarker = worldPos.clone().sub(camera.position).normalize();
+            // 카메라 시선 후방에 위치할 경우 숨김
+            const toMarker = worldPos.clone().sub(camera.position);
+            const dist = toMarker.length();
+            const dir = toMarker.clone().normalize();
+            
             const camDir = new THREE.Vector3();
             camera.getWorldDirection(camDir);
-            
-            // 모델 뒤편에 가려진 마커는 숨김
-            if (toMarker.dot(camDir) <= 0) {
+            if (dir.dot(camDir) <= 0) {
+                markerElement.style.display = 'none';
+                return;
+            }
+
+            // 광선을 쏘아 카메라와 진드기 사이에 강아지 몸체(메시)가 가로막고 있는지 확인
+            occlusionRaycaster.set(camera.position, dir);
+            const intersects = occlusionRaycaster.intersectObject(dogGroup, true);
+
+            // 오차 허용 범위(0.12)보다 앞에서 메시에 걸린다면 몸체 뒷면에 가려진 상태로 판단
+            if (intersects.length > 0 && intersects[0].distance < dist - 0.12) {
                 markerElement.style.display = 'none';
                 return;
             }
@@ -282,7 +295,7 @@
             descBox.style.opacity = '1';
         }
 
-        // --- 1. 안내 영상 모드 ---
+        // 1. 안내 영상 모드
         async function runVideoMode() {
             document.getElementById('menuButtons').classList.add('hidden');
             document.getElementById('eventModal').classList.add('hidden');
@@ -290,7 +303,6 @@
             isVideoMode = true;
             controls.enabled = false;
 
-            // 영상 모드 클래스 설정
             htmlMarkers.forEach(m => {
                 m.classList.remove('game-mode');
                 m.classList.add('video-mode');
@@ -332,7 +344,7 @@
             document.getElementById('eventModal').classList.remove('hidden');
         }
 
-        // --- 2. 숨은 진드기 잡기 게임 모드 ---
+        // 2. 숨은 진드기 잡기 게임 모드
         async function runGameMode() {
             document.getElementById('menuButtons').classList.add('hidden');
             document.getElementById('eventModal').classList.add('hidden');
@@ -344,7 +356,6 @@
             document.getElementById('remainCount').innerText = remainTicks;
             document.getElementById('gameScoreBoard').classList.remove('hidden');
 
-            // 게임 모드 클래스 설정 (1/5 크기, 강조 효과 제거)
             htmlMarkers.forEach(m => {
                 m.classList.remove('video-mode');
                 m.classList.add('game-mode');
@@ -361,11 +372,9 @@
             for (let i = 0; i < 5; i++) {
                 activeTickFlags[i] = true;
                 htmlMarkers[i].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
-                htmlMarkers[i].style.display = 'block';
             }
         }
 
-        // 진드기 터치 시 퇴치
         htmlMarkers.forEach((marker, index) => {
             marker.addEventListener('click', (e) => {
                 e.stopPropagation();
