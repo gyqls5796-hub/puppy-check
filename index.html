@@ -148,7 +148,7 @@
                     <button id="startGameBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-all active:scale-95 text-base flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
                         🎮 숨은 진드기 잡기 게임
                     </button>
-                    <!-- [수정됨] 문구 변경 -->
+                    <!-- 변경된 문구 반영 -->
                     <button id="startVideoBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 px-4 rounded-2xl shadow-md transition-all active:scale-95 text-sm flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
                         ▶ 반려동물 진드기 체크 부위 확인하기
                     </button>
@@ -159,20 +159,10 @@
                 </div>
             </div>
 
-            <!-- [추가됨] 영상 시청 완료 후 게임 유도 모달 -->
-            <div id="videoToGameModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-amber-50">
-                <div class="text-4xl mb-2">🎓</div>
-                <h2 class="text-xl font-black text-gray-800 mb-1">체크 부위 확인 완료!</h2>
-                <p class="text-gray-600 text-xs mb-4">이제 강아지 몸에 숨은 진드기 5마리를 찾아 잡아보세요!</p>
-                <button id="nextToGameBtn" class="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-md text-sm active:scale-95">
-                    🎮 진드기 잡기 게임 시작하기
-                </button>
-            </div>
-
-            <!-- 최종 이벤트 모달 (게임 완료 후에만 노출) -->
+            <!-- 최종 이벤트 모달 (공용) -->
             <div id="eventModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-red-50">
                 <div class="text-4xl mb-2">🎉</div>
-                <h2 id="modalTitle" class="text-2xl font-black text-gray-800 mb-1">진드기 완벽 퇴치!</h2>
+                <h2 id="modalTitle" class="text-2xl font-black text-gray-800 mb-1">모두 완료!</h2>
                 <p id="modalDesc" class="text-gray-600 text-xs mb-4">선물 수령을 위해 아래 채널을 추가해 주세요!</p>
                 
                 <div class="space-y-2.5">
@@ -299,7 +289,6 @@
         const startGameBtn = document.getElementById('startGameBtn');
         const startVideoBtn = document.getElementById('startVideoBtn');
         const userInfoSection = document.getElementById('userInfoSection');
-        const videoToGameModal = document.getElementById('videoToGameModal');
 
         function checkInputsValid() {
             userGender = genderSelect.value;
@@ -411,7 +400,6 @@
 
             document.getElementById('menuButtons').classList.add('hidden');
             userInfoSection.classList.add('hidden');
-            videoToGameModal.classList.add('hidden');
             document.getElementById('eventModal').classList.add('hidden');
             isIdle = false;
             isVideoMode = true;
@@ -451,9 +439,10 @@
             
             isVideoMode = false;
             isIdle = true;
-
-            // [수정됨] 영상 완료 시 인스타/유튜브 모달이 아닌 게임 유도 모달 노출!
-            videoToGameModal.classList.remove('hidden');
+            
+            // 영상 모드 완료 시 모달 텍스트 수정 후 팝업
+            document.getElementById('modalTitle').innerText = '교육 완료!';
+            document.getElementById('eventModal').classList.remove('hidden');
         }
 
         // --- 2. 숨은 진드기 잡기 게임 모드 ---
@@ -465,7 +454,6 @@
 
             document.getElementById('menuButtons').classList.add('hidden');
             userInfoSection.classList.add('hidden');
-            videoToGameModal.classList.add('hidden');
             document.getElementById('eventModal').classList.add('hidden');
             isIdle = false;
             isGameMode = true;
@@ -513,7 +501,7 @@
             });
         });
 
-        // 게임을 끝내야만 최종 선물 모달 노출
+        // 게임 완료 시 모달 텍스트 수정 후 팝업
         async function endGame() {
             isGameMode = false;
             controls.enabled = false;
@@ -524,13 +512,11 @@
             isIdle = true;
 
             document.getElementById('modalTitle').innerText = '진드기 완벽 퇴치!';
-            document.getElementById('modalDesc').innerText = '성공을 축하합니다! 채널 팔로우 후 선물을 수령하세요.';
             document.getElementById('eventModal').classList.remove('hidden');
         }
 
         function resetToHome() {
             document.getElementById('eventModal').classList.add('hidden');
-            videoToGameModal.classList.add('hidden');
             document.getElementById('gameScoreBoard').classList.add('hidden');
             userInfoSection.classList.remove('hidden');
             descBox.style.opacity = '0';
@@ -561,7 +547,6 @@
 
         document.getElementById('startVideoBtn').addEventListener('click', runVideoMode);
         document.getElementById('startGameBtn').addEventListener('click', runGameMode);
-        document.getElementById('nextToGameBtn').addEventListener('click', runGameMode);
         document.getElementById('replayBtn').addEventListener('click', resetToHome);
 
         function animate() {
