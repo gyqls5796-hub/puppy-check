@@ -15,14 +15,17 @@
         .ui-layer { position: relative; z-index: 10; max-width: 430px; margin: 0 auto; height: 100vh; pointer-events: none; }
         .pointer-events-auto { pointer-events: auto; }
         
+        /* 기본 진드기 마커 스타일 */
         .tick-marker {
             position: absolute;
             display: none;
             z-index: 20;
             cursor: pointer;
             --rot: 0deg;
+            --scale: 1; /* 줌 거리에 따라 동적으로 변하는 스케일 변수 */
         }
 
+        /* [영상 모드] - 잘 보이도록 강조 */
         .tick-marker.video-mode {
             width: 65px;
             height: 65px;
@@ -47,14 +50,15 @@
             animation: pulse-ring 1.2s infinite ease-out;
         }
 
+        /* [게임 모드] - 기본은 작지만 확대 시 --scale에 따라 커짐 */
         .tick-marker.game-mode {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             background-image: url('tick.png');
-            background-size: 12px 12px;
+            background-size: 14px 14px;
             background-repeat: no-repeat;
             background-position: center;
-            transform: translate(-50%, -50%) rotate(var(--rot));
+            transform: translate(-50%, -50%) rotate(var(--rot)) scale(var(--scale));
             filter: none;
             animation: none;
         }
@@ -64,8 +68,8 @@
         }
 
         @keyframes bounce-tick {
-            0% { transform: translate(-50%, -50%) rotate(var(--rot)) scale(1); }
-            100% { transform: translate(-50%, -50%) rotate(var(--rot)) scale(1.2); }
+            0% { transform: translate(-50%, -50%) rotate(var(--rot)) scale(var(--scale)); }
+            100% { transform: translate(-50%, -50%) rotate(var(--rot)) scale(calc(var(--scale) * 1.2)); }
         }
 
         @keyframes pulse-ring {
@@ -155,7 +159,7 @@
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
         controls.target.set(0, -0.5, 0);
-        controls.minDistance = 2.5;
+        controls.minDistance = 2.0; // 확대 범위를 조금 더 가깝게 허용
         controls.maxDistance = 10;
         controls.enabled = false;
 
@@ -233,7 +237,6 @@
         let activeTickFlags = [false, false, false, false, false];
         let remainTicks = 5;
 
-        // 가림 판정용 Raycaster
         const occlusionRaycaster = new THREE.Raycaster();
 
         function moveCamera(targetPos, lookAtPos, duration) {
@@ -254,11 +257,10 @@
             });
         }
 
-        // 몸체 차폐 감지(Raycasting)가 적용된 마커 위치 갱신
+        // 거리 기반 원근 스케일링 및 위치 갱신
         function updateMarkerPosition(markerElement, localPos) {
             const worldPos = localPos.clone().applyMatrix4(dogGroup.matrixWorld);
             
-            // 카메라 시선 후방에 위치할 경우 숨김
             const toMarker = worldPos.clone().sub(camera.position);
             const dist = toMarker.length();
             const dir = toMarker.clone().normalize();
@@ -270,15 +272,18 @@
                 return;
             }
 
-            // 광선을 쏘아 카메라와 진드기 사이에 강아지 몸체(메시)가 가로막고 있는지 확인
+            // 가림 판정
             occlusionRaycaster.set(camera.position, dir);
             const intersects = occlusionRaycaster.intersectObject(dogGroup, true);
-
-            // 오차 허용 범위(0.12)보다 앞에서 메시에 걸린다면 몸체 뒷면에 가려진 상태로 판단
             if (intersects.length > 0 && intersects[0].distance < dist - 0.12) {
                 markerElement.style.display = 'none';
                 return;
             }
+
+            // 줌(확대) 시 거리에 따라 진드기 크기를 비례해서 확대
+            // 기준 거리(6.0)보다 가까워질수록 크기가 커짐 (최대 3배)
+            const dynamicScale = Math.min(Math.max(6.0 / dist, 0.8), 3.0);
+            markerElement.style.setProperty('--scale', dynamicScale.toFixed(2));
 
             const vector = worldPos.clone().project(camera);
             const x = (vector.x * .5 + .5) * window.innerWidth;
@@ -295,7 +300,6 @@
             descBox.style.opacity = '1';
         }
 
-        // 1. 안내 영상 모드
         async function runVideoMode() {
             document.getElementById('menuButtons').classList.add('hidden');
             document.getElementById('eventModal').classList.add('hidden');
@@ -344,7 +348,6 @@
             document.getElementById('eventModal').classList.remove('hidden');
         }
 
-        // 2. 숨은 진드기 잡기 게임 모드
         async function runGameMode() {
             document.getElementById('menuButtons').classList.add('hidden');
             document.getElementById('eventModal').classList.add('hidden');
@@ -367,7 +370,7 @@
                 .start();
             await moveCamera(new THREE.Vector3(0, 0.5, 6), new THREE.Vector3(0, -0.5, 0), 800);
 
-            showDescription('강아지를 360도 돌려보며 숨어있는 작은 진드기 5마리를 찾아 터치하세요!');
+            showDescription('강아지를 돌리고 확대해보며 숨은 진드기 5마리를 찾아 터치하세요!');
 
             for (let i = 0; i < 5; i++) {
                 activeTickFlags[i] = true;
