@@ -15,23 +15,28 @@
         .ui-layer { position: relative; z-index: 10; max-width: 430px; margin: 0 auto; height: 100vh; pointer-events: none; }
         .pointer-events-auto { pointer-events: auto; }
         
+        /* 기본 진드기 마커 스타일 */
         .tick-marker {
-            width: 55px;
-            height: 55px;
             position: absolute;
             display: none;
             z-index: 20;
+            cursor: pointer;
+            --rot: 0deg;
+        }
+
+        /* [영상 모드] - 잘 보이도록 강조 */
+        .tick-marker.video-mode {
+            width: 65px;
+            height: 65px;
             background-image: url('tick.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            --rot: 0deg; 
             animation: bounce-tick 0.8s infinite alternate;
             filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.8)) drop-shadow(0 0 12px rgba(255, 0, 0, 0.6));
-            cursor: pointer;
         }
 
-        .tick-marker::after {
+        .tick-marker.video-mode::after {
             content: '';
             position: absolute;
             top: 50%; left: 50%;
@@ -42,6 +47,23 @@
             transform: translate(-50%, -50%);
             z-index: -1;
             animation: pulse-ring 1.2s infinite ease-out;
+        }
+
+        /* [게임 모드] - 약 1/5 크기(12px), 붉은 원 및 테두리 효과 완전 제거 */
+        .tick-marker.game-mode {
+            width: 40px;  /* 터치가 잘 되도록 터치 영역은 40px 유지 */
+            height: 40px;
+            background-image: url('tick.png');
+            background-size: 12px 12px; /* 실제 보이는 진드기 크기는 12px */
+            background-repeat: no-repeat;
+            background-position: center;
+            transform: translate(-50%, -50%) rotate(var(--rot));
+            filter: none; /* 빨간 번짐 제거 */
+            animation: none; /* 펄스 제거 */
+        }
+
+        .tick-marker.game-mode::after {
+            display: none; /* 붉은색 펄스 링 삭제 */
         }
 
         @keyframes bounce-tick {
@@ -239,6 +261,7 @@
             const camDir = new THREE.Vector3();
             camera.getWorldDirection(camDir);
             
+            // 모델 뒤편에 가려진 마커는 숨김
             if (toMarker.dot(camDir) <= 0) {
                 markerElement.style.display = 'none';
                 return;
@@ -266,6 +289,12 @@
             isIdle = false;
             isVideoMode = true;
             controls.enabled = false;
+
+            // 영상 모드 클래스 설정
+            htmlMarkers.forEach(m => {
+                m.classList.remove('game-mode');
+                m.classList.add('video-mode');
+            });
 
             new TWEEN.Tween(dogGroup.rotation)
                 .to({ y: 0 }, 1000)
@@ -315,13 +344,19 @@
             document.getElementById('remainCount').innerText = remainTicks;
             document.getElementById('gameScoreBoard').classList.remove('hidden');
 
+            // 게임 모드 클래스 설정 (1/5 크기, 강조 효과 제거)
+            htmlMarkers.forEach(m => {
+                m.classList.remove('video-mode');
+                m.classList.add('game-mode');
+            });
+
             new TWEEN.Tween(dogGroup.rotation)
                 .to({ y: 0 }, 800)
                 .easing(TWEEN.Easing.Quadratic.Out)
                 .start();
             await moveCamera(new THREE.Vector3(0, 0.5, 6), new THREE.Vector3(0, -0.5, 0), 800);
 
-            showDescription('강아지를 360도 돌려가며 숨은 진드기 5마리를 터치해 잡으세요!');
+            showDescription('강아지를 360도 돌려보며 숨어있는 작은 진드기 5마리를 찾아 터치하세요!');
 
             for (let i = 0; i < 5; i++) {
                 activeTickFlags[i] = true;
@@ -330,7 +365,7 @@
             }
         }
 
-        // 진드기 터치/클릭 시 퇴치 처리
+        // 진드기 터치 시 퇴치
         htmlMarkers.forEach((marker, index) => {
             marker.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -345,7 +380,7 @@
                 if (remainTicks === 0) {
                     endGame();
                 } else {
-                    showDescription(`잘 잡으셨어요! 남은 진드기: ${remainTicks}마리`);
+                    showDescription(`진드기를 잡았습니다! 남은 진드기: ${remainTicks}마리`);
                 }
             });
         });
@@ -372,6 +407,7 @@
             for (let i = 0; i < 5; i++) {
                 activeTickFlags[i] = false;
                 htmlMarkers[i].style.display = 'none';
+                htmlMarkers[i].classList.remove('game-mode', 'video-mode');
             }
 
             controls.enabled = false;
