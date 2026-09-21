@@ -99,17 +99,17 @@
                 ▶ 교육 영상 시청하기
             </button>
 
-            <!-- 이벤트 모달 -->
+            <!-- 이벤트 모달 (실제 지원단 SNS 링크 적용 완료) -->
             <div id="eventModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-red-50">
                 <div class="text-4xl mb-3">🎁</div>
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">교육 완료!</h2>
                 <p class="text-gray-600 text-sm mb-5">채널을 추가하고 선물을 받아가세요!</p>
                 
                 <div class="space-y-3">
-                    <button onclick="window.open('https://instagram.com/지원단인스타아이디', '_blank')" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90">
+                    <button onclick="window.open('https://www.instagram.com/gncdc_2019/', '_blank')" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md">
                         인스타그램 팔로우
                     </button>
-                    <button onclick="window.open('https://youtube.com/@지원단유튜브아이디', '_blank')" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90">
+                    <button onclick="window.open('https://www.youtube.com/@%EA%B2%BD%EC%83%81%EB%82%A8%EB%8F%84%EA%B0%90%EC%97%BC%EB%B3%91%EA%B4%80%EB%A6%AC%EC%A7%80', '_blank')" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md">
                         유튜브 구독하기
                     </button>
                     <button id="replayBtn" class="w-full flex items-center justify-center gap-2 bg-gray-500 text-white font-bold py-3 px-4 rounded-xl hover:bg-gray-600 mt-2">
@@ -179,11 +179,11 @@
         );
 
         const markerPositions = [
-            new THREE.Vector3(1.18, 0.70, -0.21),
-            new THREE.Vector3(1.12, -0.10, 0.04),
-            new THREE.Vector3(0.73, -1.81, -0.22),
-            new THREE.Vector3(-1.35, -0.50, 0.0),  
-            new THREE.Vector3(-0.08, -0.28, -0.39)
+            new THREE.Vector3(1.18, 0.70, -0.21),  // 1. 귀
+            new THREE.Vector3(1.12, -0.10, 0.04),  // 2. 목
+            new THREE.Vector3(0.73, -1.81, -0.22), // 3. 발가락
+            new THREE.Vector3(-1.35, -0.50, 0.0),   // 4. 꼬리/항문/사타구니
+            new THREE.Vector3(-0.08, -0.28, -0.39) // 5. 몸 전체
         ];
 
         let htmlMarkers = [
@@ -249,6 +249,7 @@
 
             await new Promise(r => setTimeout(r, 1000));
 
+            // 1. 귀
             showDescription('1. <b>귀 뒤 또는 귀 속</b><br>풀숲을 산책할 때 가장 먼저 닿는 곳이에요.');
             await moveCamera(new THREE.Vector3(2.5, 1.2, 3.5), markerPositions[0], 2000);
             htmlMarkers[0].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
@@ -256,6 +257,7 @@
             await new Promise(r => setTimeout(r, 2500));
             htmlMarkers[0].style.display = 'none';
 
+            // 2. 목
             showDescription('2. <b>목 주변</b><br>목걸이나 하네스 안쪽을 잘 살펴보세요.');
             await moveCamera(new THREE.Vector3(2.5, -0.2, 3.5), markerPositions[1], 1500);
             htmlMarkers[1].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
@@ -263,6 +265,7 @@
             await new Promise(r => setTimeout(r, 2500));
             htmlMarkers[1].style.display = 'none';
 
+            // 3. 발가락
             showDescription('3. <b>발가락 사이</b><br>산책 후 발바닥을 닦으며 꼼꼼히 확인하세요!');
             await moveCamera(new THREE.Vector3(2.0, -1.5, 3.5), markerPositions[2], 1500);
             htmlMarkers[2].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
@@ -270,6 +273,7 @@
             await new Promise(r => setTimeout(r, 2500));
             htmlMarkers[2].style.display = 'none';
 
+            // 4. 꼬리 밑동과 사타구니
             showDescription('4. <b>꼬리 밑동과 사타구니</b><br>꼬리와 항문 주변 및 사타구니 등 피부가 연한 곳에 잘 숨어요.');
             await moveCamera(new THREE.Vector3(-3.0, -0.5, 3.0), markerPositions[3], 2000);
             htmlMarkers[3].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
@@ -277,6 +281,7 @@
             await new Promise(r => setTimeout(r, 2500));
             htmlMarkers[3].style.display = 'none';
 
+            // 5. 몸 전체
             showDescription('5. <b>몸 전체 확인</b><br>털 안쪽 피부를 전체적으로 꼼꼼히 만져보세요.');
             await moveCamera(new THREE.Vector3(0, 0.5, 6.0), markerPositions[4], 2000);
             htmlMarkers[4].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
@@ -284,6 +289,7 @@
             await new Promise(r => setTimeout(r, 2500));
             htmlMarkers[4].style.display = 'none';
 
+            // 복귀 및 이벤트 모달 표시
             descBox.style.opacity = '0';
             await moveCamera(new THREE.Vector3(0, 0.5, 8), new THREE.Vector3(0, -0.5, 0), 2000);
             isAnimating = true; 
