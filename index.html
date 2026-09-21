@@ -22,10 +22,10 @@
             z-index: 20;
             cursor: pointer;
             --rot: 0deg;
-            --scale: 1; /* 줌 거리에 따라 동적으로 변하는 스케일 변수 */
+            --scale: 1;
         }
 
-        /* [영상 모드] - 잘 보이도록 강조 */
+        /* [영상 모드] - 강조 표시 */
         .tick-marker.video-mode {
             width: 65px;
             height: 65px;
@@ -50,7 +50,7 @@
             animation: pulse-ring 1.2s infinite ease-out;
         }
 
-        /* [게임 모드] - 기본은 작지만 확대 시 --scale에 따라 커짐 */
+        /* [게임 모드] - 은폐 스타일 */
         .tick-marker.game-mode {
             width: 44px;
             height: 44px;
@@ -91,6 +91,7 @@
     <div id="marker5" class="tick-marker pointer-events-auto"></div>
 
     <div class="ui-layer flex flex-col justify-between p-6">
+        <!-- 상단 타이틀 -->
         <div class="text-center mt-6 bg-white/90 backdrop-blur-sm p-4 rounded-2xl shadow-sm border border-gray-100">
             <h1 class="text-xl font-bold text-gray-800 flex items-center justify-center gap-1">
                 🐶 진드기 체크 포인트
@@ -107,20 +108,29 @@
             </div>
         </div>
 
-        <div class="mb-8">
+        <!-- 하단 영역 (버튼 및 로고) -->
+        <div class="mb-4">
             <div id="descBox" class="desc-box opacity-0 bg-gray-900/90 text-white p-4 rounded-2xl mb-3 shadow-lg text-center">
                 <p id="descText" class="text-base font-semibold leading-snug"></p>
             </div>
 
-            <div id="menuButtons" class="hidden space-y-2 pointer-events-auto">
-                <button id="startGameBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-transform transform active:scale-95 text-base flex items-center justify-center gap-2">
-                    🎮 숨은 진드기 잡기 게임
-                </button>
-                <button id="startVideoBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-2xl shadow-md transition-transform transform active:scale-95 text-sm flex items-center justify-center gap-2 opacity-90">
-                    ▶ 3D 안내 가이드 보기
-                </button>
+            <!-- 시작 메뉴 버튼 & 로고 -->
+            <div id="menuButtons" class="hidden flex flex-col items-center pointer-events-auto">
+                <div class="w-full space-y-2 mb-4">
+                    <button id="startGameBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-transform transform active:scale-95 text-base flex items-center justify-center gap-2">
+                        🎮 숨은 진드기 잡기 게임
+                    </button>
+                    <button id="startVideoBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-2xl shadow-md transition-transform transform active:scale-95 text-sm flex items-center justify-center gap-2 opacity-90">
+                        ▶ 3D 안내 가이드 보기
+                    </button>
+                </div>
+                <!-- 하단 로고 이미지 (logo.png) -->
+                <div class="flex justify-center items-center py-1">
+                    <img src="logo.png" alt="지원단 로고" class="h-9 max-w-[200px] object-contain drop-shadow-sm opacity-90" onerror="this.style.display='none'">
+                </div>
             </div>
 
+            <!-- 이벤트 모달 -->
             <div id="eventModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-red-50">
                 <div class="text-4xl mb-2">🎉</div>
                 <h2 id="modalTitle" class="text-2xl font-black text-gray-800 mb-1">모두 퇴치 완료!</h2>
@@ -130,8 +140,12 @@
                     <button onclick="window.open('https://www.instagram.com/gncdc_2019/', '_blank')" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md text-sm">
                         인스타그램 팔로우
                     </button>
-                    <button onclick="window.open('https://youtube.com/@%EA%B2%BD%EC%83%81%EB%82%A8%EB%8F%84%EA%B0%90%EC%97%BC%EB%B3%91%EA%B4%80%EB%A6%AC%EC%A7%80', '_blank')" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md text-sm">
+                    <button onclick="window.open('https://www.youtube.com/@%EA%B2%BD%EC%83%81%EB%82%A8%EB%8F%84%EA%B0%90%EC%97%BC%EB%B3%91%EA%B4%80%EB%A6%AC%EC%A7%80', '_blank')" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md text-sm">
                         유튜브 구독하기
+                    </button>
+                    <!-- 지원단 홈페이지 바로가기 버튼 추가 -->
+                    <button onclick="window.open('http://gncdc.or.kr/', '_blank')" class="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-emerald-700 shadow-md text-sm">
+                        🌐 지원단 홈페이지 방문하기
                     </button>
                     <button id="replayBtn" class="w-full flex items-center justify-center gap-2 bg-gray-600 text-white font-bold py-2.5 px-4 rounded-xl hover:bg-gray-700 text-xs mt-1">
                         🔄 메인으로 돌아가기
@@ -159,7 +173,7 @@
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
         controls.target.set(0, -0.5, 0);
-        controls.minDistance = 2.0; // 확대 범위를 조금 더 가깝게 허용
+        controls.minDistance = 2.0;
         controls.maxDistance = 10;
         controls.enabled = false;
 
@@ -257,7 +271,6 @@
             });
         }
 
-        // 거리 기반 원근 스케일링 및 위치 갱신
         function updateMarkerPosition(markerElement, localPos) {
             const worldPos = localPos.clone().applyMatrix4(dogGroup.matrixWorld);
             
@@ -272,7 +285,6 @@
                 return;
             }
 
-            // 가림 판정
             occlusionRaycaster.set(camera.position, dir);
             const intersects = occlusionRaycaster.intersectObject(dogGroup, true);
             if (intersects.length > 0 && intersects[0].distance < dist - 0.12) {
@@ -280,8 +292,6 @@
                 return;
             }
 
-            // 줌(확대) 시 거리에 따라 진드기 크기를 비례해서 확대
-            // 기준 거리(6.0)보다 가까워질수록 크기가 커짐 (최대 3배)
             const dynamicScale = Math.min(Math.max(6.0 / dist, 0.8), 3.0);
             markerElement.style.setProperty('--scale', dynamicScale.toFixed(2));
 
