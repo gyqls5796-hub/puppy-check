@@ -3,46 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>반려동물 진드기 체크</title>
+    <title>반려동물 진드기 체크 & 게임</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #f3f4f6; }
+        body { margin: 0; overflow: hidden; background-color: #f3f4f6; user-select: none; -webkit-user-select: none; }
         #canvas-container { width: 100%; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
         .ui-layer { position: relative; z-index: 10; max-width: 430px; margin: 0 auto; height: 100vh; pointer-events: none; }
         .pointer-events-auto { pointer-events: auto; }
         
-        /* 진드기 마커 컨테이너 */
         .tick-marker {
-            width: 65px;
-            height: 65px;
+            width: 55px;
+            height: 55px;
             position: absolute;
             display: none;
-            z-index: 5;
-            
+            z-index: 20;
             background-image: url('tick.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            
             --rot: 0deg; 
             animation: bounce-tick 0.8s infinite alternate;
-            
-            /* 빨간색 후광(Glow) 효과로 털 색상과 분리 */
-            filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.8)) drop-shadow(0 0 15px rgba(255, 0, 0, 0.6));
+            filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.8)) drop-shadow(0 0 12px rgba(255, 0, 0, 0.6));
+            cursor: pointer;
         }
 
-        /* 뒤에서 퍼져나가는 빨간색 레이더 펄스 효과 */
         .tick-marker::after {
             content: '';
             position: absolute;
-            top: 50%; 
-            left: 50%;
-            width: 100%; 
-            height: 100%;
-            background: rgba(239, 68, 68, 0.3);
+            top: 50%; left: 50%;
+            width: 100%; height: 100%;
+            background: rgba(239, 68, 68, 0.25);
             border: 2px solid rgba(239, 68, 68, 0.8);
             border-radius: 50%;
             transform: translate(-50%, -50%);
@@ -57,7 +51,7 @@
 
         @keyframes pulse-ring {
             0% { width: 100%; height: 100%; opacity: 1; }
-            100% { width: 220%; height: 220%; opacity: 0; }
+            100% { width: 200%; height: 200%; opacity: 0; }
         }
 
         .desc-box { transition: opacity 0.5s ease-in-out; }
@@ -65,55 +59,59 @@
 </head>
 <body>
 
-    <!-- 3D 렌더링 영역 -->
     <div id="canvas-container"></div>
     
-    <!-- HTML 마커 -->
-    <div id="marker1" class="tick-marker"></div>
-    <div id="marker2" class="tick-marker"></div>
-    <div id="marker3" class="tick-marker"></div>
-    <div id="marker4" class="tick-marker"></div>
-    <div id="marker5" class="tick-marker"></div>
+    <div id="marker1" class="tick-marker pointer-events-auto"></div>
+    <div id="marker2" class="tick-marker pointer-events-auto"></div>
+    <div id="marker3" class="tick-marker pointer-events-auto"></div>
+    <div id="marker4" class="tick-marker pointer-events-auto"></div>
+    <div id="marker5" class="tick-marker pointer-events-auto"></div>
 
-    <!-- UI 영역 -->
     <div class="ui-layer flex flex-col justify-between p-6">
-        
-        <!-- 상단 타이틀 -->
-        <div class="text-center mt-8 bg-white/80 backdrop-blur-sm p-4 rounded-2xl shadow-sm">
-            <h1 class="text-xl font-bold text-gray-800">🐶 진드기 체크 포인트</h1>
-            <p class="text-sm text-gray-500 mt-1">주요 호발 부위를 확인하세요</p>
-            <div id="loading-indicator" class="mt-3 text-red-500 font-semibold text-sm animate-pulse">
-                3D 모델을 불러오는 중입니다...
+        <div class="text-center mt-6 bg-white/90 backdrop-blur-sm p-4 rounded-2xl shadow-sm border border-gray-100">
+            <h1 class="text-xl font-bold text-gray-800 flex items-center justify-center gap-1">
+                🐶 진드기 체크 포인트
+            </h1>
+            <p id="subTitle" class="text-xs text-gray-500 mt-1">주요 호발 부위를 확인하고 퇴치하세요</p>
+            
+            <div id="gameScoreBoard" class="hidden mt-3 pt-3 border-t border-gray-100 flex justify-around items-center">
+                <div class="text-xs font-semibold text-gray-600">남은 진드기</div>
+                <div class="text-lg font-black text-red-500"><span id="remainCount">5</span> / 5</div>
+            </div>
+
+            <div id="loading-indicator" class="mt-2 text-red-500 font-semibold text-xs animate-pulse">
+                3D 모델을 준비하고 있습니다...
             </div>
         </div>
 
-        <!-- 하단 설명 & 버튼 영역 -->
-        <div class="mb-10">
-            <!-- 설명 텍스트 창 -->
-            <div id="descBox" class="desc-box opacity-0 bg-gray-800/90 text-white p-5 rounded-2xl mb-4 shadow-lg text-center">
-                <p id="descText" class="text-lg font-bold">진드기 확인 부위</p>
+        <div class="mb-8">
+            <div id="descBox" class="desc-box opacity-0 bg-gray-900/90 text-white p-4 rounded-2xl mb-3 shadow-lg text-center">
+                <p id="descText" class="text-base font-semibold leading-snug"></p>
             </div>
 
-            <!-- 시작 버튼 -->
-            <button id="startBtn" class="pointer-events-auto hidden w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-2xl shadow-lg transition-transform transform hover:scale-105 active:scale-95 text-lg">
-                ▶ 교육 영상 시청하기
-            </button>
+            <div id="menuButtons" class="hidden space-y-2 pointer-events-auto">
+                <button id="startGameBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-transform transform active:scale-95 text-base flex items-center justify-center gap-2">
+                    🎮 숨은 진드기 잡기 게임
+                </button>
+                <button id="startVideoBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-2xl shadow-md transition-transform transform active:scale-95 text-sm flex items-center justify-center gap-2 opacity-90">
+                    ▶ 3D 안내 가이드 보기
+                </button>
+            </div>
 
-            <!-- 이벤트 모달 (실제 지원단 SNS 링크 적용 완료) -->
             <div id="eventModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-red-50">
-                <div class="text-4xl mb-3">🎁</div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">교육 완료!</h2>
-                <p class="text-gray-600 text-sm mb-5">채널을 추가하고 선물을 받아가세요!</p>
+                <div class="text-4xl mb-2">🎉</div>
+                <h2 id="modalTitle" class="text-2xl font-black text-gray-800 mb-1">모두 퇴치 완료!</h2>
+                <p id="modalDesc" class="text-gray-600 text-xs mb-4">채널을 추가하고 현장 선물을 수령하세요!</p>
                 
-                <div class="space-y-3">
-                    <button onclick="window.open('https://www.instagram.com/gncdc_2019/', '_blank')" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md">
+                <div class="space-y-2.5">
+                    <button onclick="window.open('https://www.instagram.com/gncdc_2019/', '_blank')" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md text-sm">
                         인스타그램 팔로우
                     </button>
-                    <button onclick="window.open('https://www.youtube.com/@%EA%B2%BD%EC%83%81%EB%82%A8%EB%8F%84%EA%B0%90%EC%97%BC%EB%B3%91%EA%B4%80%EB%A6%AC%EC%A7%80', '_blank')" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md">
+                    <button onclick="window.open('https://www.youtube.com/@%EA%B2%BD%EC%83%81%EB%82%A8%EB%8F%84%EA%B0%90%EC%97%BC%EB%B3%91%EA%B4%80%EB%A6%AC%EC%A7%80', '_blank')" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md text-sm">
                         유튜브 구독하기
                     </button>
-                    <button id="replayBtn" class="w-full flex items-center justify-center gap-2 bg-gray-500 text-white font-bold py-3 px-4 rounded-xl hover:bg-gray-600 mt-2">
-                        🔄 다시 보기
+                    <button id="replayBtn" class="w-full flex items-center justify-center gap-2 bg-gray-600 text-white font-bold py-2.5 px-4 rounded-xl hover:bg-gray-700 text-xs mt-1">
+                        🔄 메인으로 돌아가기
                     </button>
                 </div>
             </div>
@@ -133,6 +131,14 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.target.set(0, -0.5, 0);
+        controls.minDistance = 2.5;
+        controls.maxDistance = 10;
+        controls.enabled = false;
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
@@ -169,7 +175,7 @@
                 dogGroup.add(wrapper);
 
                 document.getElementById('loading-indicator').style.display = 'none';
-                document.getElementById('startBtn').classList.remove('hidden');
+                document.getElementById('menuButtons').classList.remove('hidden');
             },
             undefined,
             function (error) {
@@ -182,8 +188,16 @@
             new THREE.Vector3(1.18, 0.70, -0.21),  // 1. 귀
             new THREE.Vector3(1.12, -0.10, 0.04),  // 2. 목
             new THREE.Vector3(0.73, -1.81, -0.22), // 3. 발가락
-            new THREE.Vector3(-1.35, -0.50, 0.0),   // 4. 꼬리/항문/사타구니
-            new THREE.Vector3(-0.08, -0.28, -0.39) // 5. 몸 전체
+            new THREE.Vector3(-1.35, -0.50, 0.0),   // 4. 사타구니/꼬리밑동
+            new THREE.Vector3(-0.08, -0.28, -0.39) // 5. 몸통
+        ];
+
+        const markerDescriptions = [
+            '1. <b>귀 뒤 또는 귀 속</b><br>풀숲을 산책할 때 가장 먼저 닿는 곳이에요.',
+            '2. <b>목 주변</b><br>목걸이나 하네스 안쪽을 잘 살펴보세요.',
+            '3. <b>발가락 사이</b><br>산책 후 발바닥을 닦으며 꼼꼼히 확인하세요!',
+            '4. <b>꼬리 밑동과 사타구니</b><br>꼬리와 항문 주변 및 사타구니 등 피부가 연한 곳에 잘 숨어요.',
+            '5. <b>몸 전체 확인</b><br>털 안쪽 피부를 전체적으로 꼼꼼히 만져보세요.'
         ];
 
         let htmlMarkers = [
@@ -194,8 +208,11 @@
             document.getElementById('marker5')
         ];
 
-        let isAnimating = true;
-        let isScenarioRunning = false;
+        let isIdle = true;
+        let isVideoMode = false;
+        let isGameMode = false;
+        let activeTickFlags = [false, false, false, false, false];
+        let remainTicks = 5;
 
         function moveCamera(targetPos, lookAtPos, duration) {
             return new Promise(resolve => {
@@ -207,26 +224,32 @@
                         camera.position.copy(startPos);
                         camera.lookAt(lookAtPos);
                     })
-                    .onComplete(resolve)
+                    .onComplete(() => {
+                        camera.lookAt(lookAtPos);
+                        resolve();
+                    })
                     .start();
             });
         }
 
-        function updateMarkerPosition(markerElement, pos3D) {
-            const vector = pos3D.clone();
-            vector.project(camera);
+        function updateMarkerPosition(markerElement, localPos) {
+            const worldPos = localPos.clone().applyMatrix4(dogGroup.matrixWorld);
             
-            if (vector.z > 1) {
-                markerElement.style.opacity = '0';
+            const toMarker = worldPos.clone().sub(camera.position).normalize();
+            const camDir = new THREE.Vector3();
+            camera.getWorldDirection(camDir);
+            
+            if (toMarker.dot(camDir) <= 0) {
+                markerElement.style.display = 'none';
                 return;
-            } else {
-                markerElement.style.opacity = '1';
             }
 
+            const vector = worldPos.clone().project(camera);
             const x = (vector.x * .5 + .5) * window.innerWidth;
             const y = (vector.y * -.5 + .5) * window.innerHeight;
             markerElement.style.left = `${x}px`;
             markerElement.style.top = `${y}px`;
+            markerElement.style.display = 'block';
         }
 
         const descBox = document.getElementById('descBox');
@@ -236,81 +259,152 @@
             descBox.style.opacity = '1';
         }
 
-        async function runScenario() {
-            document.getElementById('startBtn').classList.add('hidden');
+        // --- 1. 안내 영상 모드 ---
+        async function runVideoMode() {
+            document.getElementById('menuButtons').classList.add('hidden');
             document.getElementById('eventModal').classList.add('hidden');
-            isScenarioRunning = true;
-            isAnimating = false;
+            isIdle = false;
+            isVideoMode = true;
+            controls.enabled = false;
 
             new TWEEN.Tween(dogGroup.rotation)
                 .to({ y: 0 }, 1000)
                 .easing(TWEEN.Easing.Quadratic.Out)
                 .start();
-
             await new Promise(r => setTimeout(r, 1000));
 
-            // 1. 귀
-            showDescription('1. <b>귀 뒤 또는 귀 속</b><br>풀숲을 산책할 때 가장 먼저 닿는 곳이에요.');
-            await moveCamera(new THREE.Vector3(2.5, 1.2, 3.5), markerPositions[0], 2000);
-            htmlMarkers[0].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
-            htmlMarkers[0].style.display = 'block';
-            await new Promise(r => setTimeout(r, 2500));
-            htmlMarkers[0].style.display = 'none';
+            const cameraAngles = [
+                new THREE.Vector3(2.5, 1.2, 3.5),
+                new THREE.Vector3(2.5, -0.2, 3.5),
+                new THREE.Vector3(2.0, -1.5, 3.5),
+                new THREE.Vector3(-3.0, -0.5, 3.0),
+                new THREE.Vector3(0, 0.5, 6.0)
+            ];
 
-            // 2. 목
-            showDescription('2. <b>목 주변</b><br>목걸이나 하네스 안쪽을 잘 살펴보세요.');
-            await moveCamera(new THREE.Vector3(2.5, -0.2, 3.5), markerPositions[1], 1500);
-            htmlMarkers[1].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
-            htmlMarkers[1].style.display = 'block';
-            await new Promise(r => setTimeout(r, 2500));
-            htmlMarkers[1].style.display = 'none';
+            for (let i = 0; i < 5; i++) {
+                showDescription(markerDescriptions[i]);
+                await moveCamera(cameraAngles[i], markerPositions[i], 1800);
+                
+                activeTickFlags[i] = true;
+                htmlMarkers[i].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
+                await new Promise(r => setTimeout(r, 2500));
+                
+                activeTickFlags[i] = false;
+                htmlMarkers[i].style.display = 'none';
+            }
 
-            // 3. 발가락
-            showDescription('3. <b>발가락 사이</b><br>산책 후 발바닥을 닦으며 꼼꼼히 확인하세요!');
-            await moveCamera(new THREE.Vector3(2.0, -1.5, 3.5), markerPositions[2], 1500);
-            htmlMarkers[2].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
-            htmlMarkers[2].style.display = 'block';
-            await new Promise(r => setTimeout(r, 2500));
-            htmlMarkers[2].style.display = 'none';
-
-            // 4. 꼬리 밑동과 사타구니
-            showDescription('4. <b>꼬리 밑동과 사타구니</b><br>꼬리와 항문 주변 및 사타구니 등 피부가 연한 곳에 잘 숨어요.');
-            await moveCamera(new THREE.Vector3(-3.0, -0.5, 3.0), markerPositions[3], 2000);
-            htmlMarkers[3].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
-            htmlMarkers[3].style.display = 'block';
-            await new Promise(r => setTimeout(r, 2500));
-            htmlMarkers[3].style.display = 'none';
-
-            // 5. 몸 전체
-            showDescription('5. <b>몸 전체 확인</b><br>털 안쪽 피부를 전체적으로 꼼꼼히 만져보세요.');
-            await moveCamera(new THREE.Vector3(0, 0.5, 6.0), markerPositions[4], 2000);
-            htmlMarkers[4].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
-            htmlMarkers[4].style.display = 'block';
-            await new Promise(r => setTimeout(r, 2500));
-            htmlMarkers[4].style.display = 'none';
-
-            // 복귀 및 이벤트 모달 표시
             descBox.style.opacity = '0';
-            await moveCamera(new THREE.Vector3(0, 0.5, 8), new THREE.Vector3(0, -0.5, 0), 2000);
-            isAnimating = true; 
-            isScenarioRunning = false;
+            await moveCamera(new THREE.Vector3(0, 0.5, 8), new THREE.Vector3(0, -0.5, 0), 1800);
+            
+            isVideoMode = false;
+            isIdle = true;
+            document.getElementById('modalTitle').innerText = '교육 완료!';
+            document.getElementById('modalDesc').innerText = '채널을 추가하고 선물을 받아가세요!';
             document.getElementById('eventModal').classList.remove('hidden');
         }
 
-        document.getElementById('startBtn').addEventListener('click', runScenario);
-        document.getElementById('replayBtn').addEventListener('click', runScenario);
+        // --- 2. 숨은 진드기 잡기 게임 모드 ---
+        async function runGameMode() {
+            document.getElementById('menuButtons').classList.add('hidden');
+            document.getElementById('eventModal').classList.add('hidden');
+            isIdle = false;
+            isGameMode = true;
+            controls.enabled = true;
+            
+            remainTicks = 5;
+            document.getElementById('remainCount').innerText = remainTicks;
+            document.getElementById('gameScoreBoard').classList.remove('hidden');
+
+            new TWEEN.Tween(dogGroup.rotation)
+                .to({ y: 0 }, 800)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .start();
+            await moveCamera(new THREE.Vector3(0, 0.5, 6), new THREE.Vector3(0, -0.5, 0), 800);
+
+            showDescription('강아지를 360도 돌려가며 숨은 진드기 5마리를 터치해 잡으세요!');
+
+            for (let i = 0; i < 5; i++) {
+                activeTickFlags[i] = true;
+                htmlMarkers[i].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
+                htmlMarkers[i].style.display = 'block';
+            }
+        }
+
+        // 진드기 터치/클릭 시 퇴치 처리
+        htmlMarkers.forEach((marker, index) => {
+            marker.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!isGameMode || !activeTickFlags[index]) return;
+
+                activeTickFlags[index] = false;
+                marker.style.display = 'none';
+
+                remainTicks--;
+                document.getElementById('remainCount').innerText = remainTicks;
+
+                if (remainTicks === 0) {
+                    endGame();
+                } else {
+                    showDescription(`잘 잡으셨어요! 남은 진드기: ${remainTicks}마리`);
+                }
+            });
+        });
+
+        async function endGame() {
+            isGameMode = false;
+            controls.enabled = false;
+            document.getElementById('gameScoreBoard').classList.add('hidden');
+            descBox.style.opacity = '0';
+
+            await moveCamera(new THREE.Vector3(0, 0.5, 8), new THREE.Vector3(0, -0.5, 0), 1200);
+            isIdle = true;
+
+            document.getElementById('modalTitle').innerText = '진드기 완벽 퇴치!';
+            document.getElementById('modalDesc').innerText = '성공을 축하합니다! 채널 팔로우 후 선물을 수령하세요.';
+            document.getElementById('eventModal').classList.remove('hidden');
+        }
+
+        function resetToHome() {
+            document.getElementById('eventModal').classList.add('hidden');
+            document.getElementById('gameScoreBoard').classList.add('hidden');
+            descBox.style.opacity = '0';
+            
+            for (let i = 0; i < 5; i++) {
+                activeTickFlags[i] = false;
+                htmlMarkers[i].style.display = 'none';
+            }
+
+            controls.enabled = false;
+            camera.position.set(0, 0.5, 8);
+            camera.lookAt(0, -0.5, 0);
+            controls.target.set(0, -0.5, 0);
+
+            isIdle = true;
+            isVideoMode = false;
+            isGameMode = false;
+            
+            document.getElementById('menuButtons').classList.remove('hidden');
+        }
+
+        document.getElementById('startVideoBtn').addEventListener('click', runVideoMode);
+        document.getElementById('startGameBtn').addEventListener('click', runGameMode);
+        document.getElementById('replayBtn').addEventListener('click', resetToHome);
 
         function animate() {
             requestAnimationFrame(animate);
             TWEEN.update();
 
-            if (isAnimating) {
-                dogGroup.rotation.y += 0.005; 
+            if (isIdle) {
+                dogGroup.rotation.y += 0.005;
             }
 
-            if (isScenarioRunning) {
-                for(let i=0; i<5; i++) {
-                    if(htmlMarkers[i].style.display === 'block') {
+            if (controls.enabled) {
+                controls.update();
+            }
+
+            if (isVideoMode || isGameMode) {
+                for (let i = 0; i < 5; i++) {
+                    if (activeTickFlags[i]) {
                         updateMarkerPosition(htmlMarkers[i], markerPositions[i]);
                     }
                 }
