@@ -158,10 +158,10 @@
                 </div>
             </div>
 
-            <!-- 최종 이벤트 모달 -->
+            <!-- 최종 이벤트 모달 (공용) -->
             <div id="eventModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-red-50">
                 <div class="text-4xl mb-2">🎉</div>
-                <h2 id="modalTitle" class="text-2xl font-black text-gray-800 mb-1">참여 완료!</h2>
+                <h2 id="modalTitle" class="text-2xl font-black text-gray-800 mb-1">모두 완료!</h2>
                 <p id="modalDesc" class="text-gray-600 text-xs mb-4">선물 수령을 위해 아래 채널을 추가해 주세요!</p>
                 
                 <div class="space-y-2.5">
@@ -259,12 +259,13 @@
             new THREE.Vector3(-0.08, -0.28, -0.39)
         ];
 
+        // [수정됨] 5번 설명에 줄바꿈(<br>) 추가
         const markerDescriptions = [
             '1. <b>귀 뒤 또는 귀 속</b><br>풀숲을 산책할 때 가장 먼저 닿는 곳이에요.',
             '2. <b>목 주변</b><br>목걸이나 하네스 안쪽을 잘 살펴보세요.',
             '3. <b>발가락 사이</b><br>산책 후 발바닥을 닦으며 꼼꼼히 확인하세요!',
             '4. <b>꼬리 밑동과 사타구니</b><br>꼬리와 항문 주변 및 사타구니 등 피부가 연한 곳에 잘 숨어요.',
-            '5. <b>몸 전체 확인</b><br>털 안쪽 피부를 전체적으로 꼼꼼히 만져보세요.'
+            '5. <b>몸 전체 확인</b><br>털 안쪽 피부를 전체적으로<br>꼼꼼히 만져보세요.'
         ];
 
         let htmlMarkers = [
@@ -365,7 +366,7 @@
                 return;
             }
 
-            // [수정됨] 영상 모드에서는 가림 판정(Occlusion)을 무시하여 파묻힌 마커도 확실히 보이도록 보장합니다.
+            // 영상 모드에서는 가림 판정(Occlusion)을 무시하여 파묻힌 마커도 확실히 보이도록 보장합니다.
             // 게임 모드에서만 가림 판정을 실행하되, 모델 피부 두께를 고려해 허용 오차를 넉넉히(0.45) 줍니다.
             if (isGameMode) {
                 occlusionRaycaster.set(camera.position, dir);
