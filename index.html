@@ -138,8 +138,8 @@
 
         <!-- 하단 영역 (버튼 및 로고) -->
         <div class="mb-4">
-            <div id="descBox" class="desc-box opacity-0 bg-gray-900/90 text-white p-4 rounded-2xl mb-3 shadow-lg text-center">
-                <p id="descText" class="text-base font-semibold leading-snug"></p>
+            <div id="descBox" class="desc-box opacity-0 bg-gray-900/90 text-white p-4 rounded-2xl mb-3 shadow-lg text-center border border-gray-700">
+                <p id="descText" class="text-base font-semibold leading-relaxed"></p>
             </div>
 
             <!-- 시작 메뉴 버튼 & 로고 -->
@@ -259,13 +259,13 @@
             new THREE.Vector3(-0.08, -0.28, -0.39)
         ];
 
-        // [수정됨] 5번 설명에 줄바꿈(<br>) 추가
+        // [수정됨] 제목을 개나리색(text-yellow-400)으로 강조하고 4, 5번 줄바꿈 및 문구 적용
         const markerDescriptions = [
-            '1. <b>귀 뒤 또는 귀 속</b><br>풀숲을 산책할 때 가장 먼저 닿는 곳이에요.',
-            '2. <b>목 주변</b><br>목걸이나 하네스 안쪽을 잘 살펴보세요.',
-            '3. <b>발가락 사이</b><br>산책 후 발바닥을 닦으며 꼼꼼히 확인하세요!',
-            '4. <b>꼬리 밑동과 사타구니</b><br>꼬리와 항문 주변 및 사타구니 등 피부가 연한 곳에 잘 숨어요.',
-            '5. <b>몸 전체 확인</b><br>털 안쪽 피부를 전체적으로<br>꼼꼼히 만져보세요.'
+            '<span class="text-yellow-400 font-bold text-base block mb-0.5">1. 귀 뒤 또는 귀 속</span>풀숲을 산책할 때 가장 먼저 닿는 곳이에요.',
+            '<span class="text-yellow-400 font-bold text-base block mb-0.5">2. 목 주변</span>목걸이나 하네스 안쪽을 잘 살펴보세요.',
+            '<span class="text-yellow-400 font-bold text-base block mb-0.5">3. 발가락 사이</span>산책 후 발바닥을 닦으며 꼼꼼히 확인하세요!',
+            '<span class="text-yellow-400 font-bold text-base block mb-0.5">4. 꼬리 밑동과 사타구니</span>꼬리와 항문 주변 및 사타구니 등<br>피부가 연한 곳에 잘 숨어요.',
+            '<span class="text-yellow-400 font-bold text-base block mb-0.5">5. 몸 전체 확인</span>털 안쪽 피부를 전체적으로<br>꼼꼼히 살펴보세요.'
         ];
 
         let htmlMarkers = [
@@ -366,8 +366,8 @@
                 return;
             }
 
-            // 영상 모드에서는 가림 판정(Occlusion)을 무시하여 파묻힌 마커도 확실히 보이도록 보장합니다.
-            // 게임 모드에서만 가림 판정을 실행하되, 모델 피부 두께를 고려해 허용 오차를 넉넉히(0.45) 줍니다.
+            // 영상 모드에서는 가림 판정(Occlusion)을 무시하여 파묻힌 마커도 확실히 보이도록 보장
+            // 게임 모드에서만 모델 피부 두께를 고려해 허용 오차(0.45) 적용
             if (isGameMode) {
                 occlusionRaycaster.set(camera.position, dir);
                 const intersects = occlusionRaycaster.intersectObject(dogGroup, true);
@@ -395,6 +395,7 @@
             descBox.style.opacity = '1';
         }
 
+        // 1. 체크 부위 확인 영상 모드
         async function runVideoMode() {
             if (!checkInputsValid()) {
                 alert('상단에서 성별과 연령대를 먼저 선택해주세요!');
@@ -443,11 +444,12 @@
             isVideoMode = false;
             isIdle = true;
             
-            // 영상 모드 완료 시 모달 텍스트 수정 후 팝업
+            // 영상 모드 완료 시 모달 팝업
             document.getElementById('modalTitle').innerText = '교육 완료!';
             document.getElementById('eventModal').classList.remove('hidden');
         }
 
+        // 2. 숨은 진드기 잡기 게임 모드
         async function runGameMode() {
             if (!checkInputsValid()) {
                 alert('상단에서 성별과 연령대를 먼저 선택해주세요!');
@@ -503,6 +505,7 @@
             });
         });
 
+        // 게임 완료 시 모달 팝업
         async function endGame() {
             isGameMode = false;
             controls.enabled = false;
@@ -528,6 +531,7 @@
                 htmlMarkers[i].classList.remove('game-mode', 'video-mode');
             }
 
+            // 선택값 초기화
             genderSelect.value = '';
             ageSelect.value = '';
             userGender = '';
