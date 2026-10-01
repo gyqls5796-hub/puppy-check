@@ -15,7 +15,7 @@
         .ui-layer { position: relative; z-index: 10; max-width: 430px; margin: 0 auto; height: 100vh; pointer-events: none; }
         .pointer-events-auto { pointer-events: auto; }
         
-        /* 기본 진드기 마커 스타일 */
+        /* [게임 모드] 진드기 마커 */
         .tick-marker {
             position: absolute;
             display: none;
@@ -23,35 +23,6 @@
             cursor: pointer;
             --rot: 0deg;
             --scale: 1;
-        }
-
-        /* [영상 모드] - 강조 표시 */
-        .tick-marker.video-mode {
-            width: 65px;
-            height: 65px;
-            background-image: url('tick.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            animation: bounce-tick 0.8s infinite alternate;
-            filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.8)) drop-shadow(0 0 12px rgba(255, 0, 0, 0.6));
-        }
-
-        .tick-marker.video-mode::after {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 100%; height: 100%;
-            background: rgba(239, 68, 68, 0.25);
-            border: 2px solid rgba(239, 68, 68, 0.8);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            z-index: -1;
-            animation: pulse-ring 1.2s infinite ease-out;
-        }
-
-        /* [게임 모드] - 은폐 스타일 */
-        .tick-marker.game-mode {
             width: 44px;
             height: 44px;
             background-image: url('tick.png');
@@ -59,22 +30,6 @@
             background-repeat: no-repeat;
             background-position: center;
             transform: translate(-50%, -50%) rotate(var(--rot)) scale(var(--scale));
-            filter: none;
-            animation: none;
-        }
-
-        .tick-marker.game-mode::after {
-            display: none;
-        }
-
-        @keyframes bounce-tick {
-            0% { transform: translate(-50%, -50%) rotate(var(--rot)) scale(var(--scale)); }
-            100% { transform: translate(-50%, -50%) rotate(var(--rot)) scale(calc(var(--scale) * 1.2)); }
-        }
-
-        @keyframes pulse-ring {
-            0% { width: 100%; height: 100%; opacity: 1; }
-            100% { width: 200%; height: 200%; opacity: 0; }
         }
 
         .desc-box { transition: opacity 0.5s ease-in-out; }
@@ -89,6 +44,18 @@
     <div id="marker3" class="tick-marker pointer-events-auto"></div>
     <div id="marker4" class="tick-marker pointer-events-auto"></div>
     <div id="marker5" class="tick-marker pointer-events-auto"></div>
+
+    <!-- [신규] 릴스/쇼츠 mp4 영상 재생 전용 전체화면 레이어 -->
+    <div id="videoModalLayer" class="fixed inset-0 z-50 bg-black flex items-center justify-center hidden">
+        <video id="guideVideoPlayer" class="w-full h-full object-contain" playsinline preload="auto">
+            <source src="guide.mp4" type="video/mp4">
+            영상을 지원하지 않는 브라우저입니다.
+        </video>
+        <!-- 영상 건너뛰기 / 닫기 버튼 -->
+        <button id="closeVideoBtn" class="absolute top-4 right-4 bg-black/60 text-white text-xs px-3.5 py-1.5 rounded-full border border-white/30 active:scale-95">
+            ✕ 닫기
+        </button>
+    </div>
 
     <div class="ui-layer flex flex-col justify-between p-6">
         <!-- 상단 헤더 영역 -->
@@ -259,15 +226,6 @@
             new THREE.Vector3(-0.08, -0.28, -0.39)
         ];
 
-        // [수정됨] 제목을 개나리색(text-yellow-400)으로 강조하고 4, 5번 줄바꿈 및 문구 적용
-        const markerDescriptions = [
-            '<span class="text-yellow-400 font-bold text-base block mb-0.5">1. 귀 뒤 또는 귀 속</span>풀숲을 산책할 때 가장 먼저 닿는 곳이에요.',
-            '<span class="text-yellow-400 font-bold text-base block mb-0.5">2. 목 주변</span>목걸이나 하네스 안쪽을 잘 살펴보세요.',
-            '<span class="text-yellow-400 font-bold text-base block mb-0.5">3. 발가락 사이</span>산책 후 발바닥을 닦으며 꼼꼼히 확인하세요!',
-            '<span class="text-yellow-400 font-bold text-base block mb-0.5">4. 꼬리 밑동과 사타구니</span>꼬리와 항문 주변 및 사타구니 등<br>피부가 연한 곳에 잘 숨어요.',
-            '<span class="text-yellow-400 font-bold text-base block mb-0.5">5. 몸 전체 확인</span>털 안쪽 피부를 전체적으로<br>꼼꼼히 살펴보세요.'
-        ];
-
         let htmlMarkers = [
             document.getElementById('marker1'),
             document.getElementById('marker2'),
@@ -277,7 +235,6 @@
         ];
 
         let isIdle = true;
-        let isVideoMode = false;
         let isGameMode = false;
         let activeTickFlags = [false, false, false, false, false];
         let remainTicks = 5;
@@ -366,8 +323,6 @@
                 return;
             }
 
-            // 영상 모드에서는 가림 판정(Occlusion)을 무시하여 파묻힌 마커도 확실히 보이도록 보장
-            // 게임 모드에서만 모델 피부 두께를 고려해 허용 오차(0.45) 적용
             if (isGameMode) {
                 occlusionRaycaster.set(camera.position, dir);
                 const intersects = occlusionRaycaster.intersectObject(dogGroup, true);
@@ -395,8 +350,14 @@
             descBox.style.opacity = '1';
         }
 
-        // 1. 체크 부위 확인 영상 모드
-        async function runVideoMode() {
+        /* ----------------------------------------------------
+           [대체된 부분] MP4 영상 재생 로직 (릴스 제작본 재생)
+        ---------------------------------------------------- */
+        const videoModalLayer = document.getElementById('videoModalLayer');
+        const guideVideoPlayer = document.getElementById('guideVideoPlayer');
+        const closeVideoBtn = document.getElementById('closeVideoBtn');
+
+        function openAndPlayGuideVideo() {
             if (!checkInputsValid()) {
                 alert('상단에서 성별과 연령대를 먼저 선택해주세요!');
                 return;
@@ -406,50 +367,37 @@
             userInfoSection.classList.add('hidden');
             document.getElementById('eventModal').classList.add('hidden');
             isIdle = false;
-            isVideoMode = true;
-            controls.enabled = false;
 
-            htmlMarkers.forEach(m => {
-                m.classList.remove('game-mode');
-                m.classList.add('video-mode');
+            // 영상 모달 띄우고 재생
+            videoModalLayer.classList.remove('hidden');
+            guideVideoPlayer.currentTime = 0;
+            guideVideoPlayer.muted = false; // 소리 켜기
+            guideVideoPlayer.play().catch(err => {
+                // 브라우저 자동재생 정책 방어 (음소거 후 재생)
+                console.log('소리 켠 상태 재생 실패, 음소거 시도:', err);
+                guideVideoPlayer.muted = true;
+                guideVideoPlayer.play();
             });
+        }
 
-            new TWEEN.Tween(dogGroup.rotation)
-                .to({ y: 0 }, 1000)
-                .easing(TWEEN.Easing.Quadratic.Out)
-                .start();
-            await new Promise(r => setTimeout(r, 1000));
-
-            const cameraAngles = [
-                new THREE.Vector3(2.5, 1.2, 3.5),
-                new THREE.Vector3(2.5, -0.2, 3.5),
-                new THREE.Vector3(2.0, -1.5, 3.5),
-                new THREE.Vector3(-3.0, -0.5, 3.0),
-                new THREE.Vector3(0, 0.5, 6.0)
-            ];
-
-            for (let i = 0; i < 5; i++) {
-                showDescription(markerDescriptions[i]);
-                await moveCamera(cameraAngles[i], markerPositions[i], 1800);
-                activeTickFlags[i] = true;
-                htmlMarkers[i].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
-                await new Promise(r => setTimeout(r, 2500));
-                activeTickFlags[i] = false;
-                htmlMarkers[i].style.display = 'none';
-            }
-
-            descBox.style.opacity = '0';
-            await moveCamera(new THREE.Vector3(0, 0.5, 8), new THREE.Vector3(0, -0.5, 0), 1800);
-            
-            isVideoMode = false;
+        function finishVideo() {
+            guideVideoPlayer.pause();
+            videoModalLayer.classList.add('hidden');
             isIdle = true;
-            
-            // 영상 모드 완료 시 모달 팝업
+
+            // 영상 종료 시 선물 수령 모달창 노출
             document.getElementById('modalTitle').innerText = '교육 완료!';
             document.getElementById('eventModal').classList.remove('hidden');
         }
 
-        // 2. 숨은 진드기 잡기 게임 모드
+        // 영상이 다 끝났을 때 자동 실행
+        guideVideoPlayer.addEventListener('ended', finishVideo);
+        // 닫기 버튼을 눌렀을 때 실행
+        closeVideoBtn.addEventListener('click', finishVideo);
+
+        /* ----------------------------------------------------
+           게임 모드 로직
+        ---------------------------------------------------- */
         async function runGameMode() {
             if (!checkInputsValid()) {
                 alert('상단에서 성별과 연령대를 먼저 선택해주세요!');
@@ -466,11 +414,6 @@
             remainTicks = 5;
             document.getElementById('remainCount').innerText = remainTicks;
             document.getElementById('gameScoreBoard').classList.remove('hidden');
-
-            htmlMarkers.forEach(m => {
-                m.classList.remove('video-mode');
-                m.classList.add('game-mode');
-            });
 
             new TWEEN.Tween(dogGroup.rotation)
                 .to({ y: 0 }, 800)
@@ -505,7 +448,6 @@
             });
         });
 
-        // 게임 완료 시 모달 팝업
         async function endGame() {
             isGameMode = false;
             controls.enabled = false;
@@ -528,10 +470,8 @@
             for (let i = 0; i < 5; i++) {
                 activeTickFlags[i] = false;
                 htmlMarkers[i].style.display = 'none';
-                htmlMarkers[i].classList.remove('game-mode', 'video-mode');
             }
 
-            // 선택값 초기화
             genderSelect.value = '';
             ageSelect.value = '';
             userGender = '';
@@ -543,14 +483,13 @@
             controls.target.set(0, -0.5, 0);
 
             isIdle = true;
-            isVideoMode = false;
             isGameMode = false;
             
             document.getElementById('menuButtons').classList.remove('hidden');
             checkInputsValid();
         }
 
-        document.getElementById('startVideoBtn').addEventListener('click', runVideoMode);
+        document.getElementById('startVideoBtn').addEventListener('click', openAndPlayGuideVideo);
         document.getElementById('startGameBtn').addEventListener('click', runGameMode);
         document.getElementById('replayBtn').addEventListener('click', resetToHome);
 
@@ -566,7 +505,7 @@
                 controls.update();
             }
 
-            if (isVideoMode || isGameMode) {
+            if (isGameMode) {
                 for (let i = 0; i < 5; i++) {
                     if (activeTickFlags[i]) {
                         updateMarkerPosition(htmlMarkers[i], markerPositions[i]);
