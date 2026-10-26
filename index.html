@@ -45,15 +45,12 @@
     <div id="marker4" class="tick-marker pointer-events-auto"></div>
     <div id="marker5" class="tick-marker pointer-events-auto"></div>
 
-    <!-- 릴스/쇼츠 mp4 영상 재생 전용 전체화면 레이어 -->
+    <!-- [수정됨] 닫기 버튼을 제거하여 영상을 끝까지 시청하도록 강제하는 레이어 -->
     <div id="videoModalLayer" class="fixed inset-0 z-50 bg-black flex items-center justify-center hidden">
         <video id="guideVideoPlayer" class="w-full h-full object-contain" playsinline preload="auto">
             <source src="guide.mp4" type="video/mp4">
             영상을 지원하지 않는 브라우저입니다.
         </video>
-        <button id="closeVideoBtn" class="absolute top-4 right-4 bg-black/60 text-white text-xs px-3.5 py-1.5 rounded-full border border-white/30 active:scale-95">
-            ✕ 닫기
-        </button>
     </div>
 
     <div class="ui-layer flex flex-col justify-between p-6">
@@ -290,7 +287,7 @@
 
         let userGender = '';
         let userAge = '';
-        let currentMode = ''; // [신규] '게임' or '영상' 추적 변수
+        let currentMode = ''; 
 
         const genderSelect = document.getElementById('genderSelect');
         const ageSelect = document.getElementById('ageSelect');
@@ -316,7 +313,6 @@
         genderSelect.addEventListener('change', checkInputsValid);
         ageSelect.addEventListener('change', checkInputsValid);
 
-        // [수정됨] mode(게임/영상) 데이터를 함께 전송
         function sendStatsToGoogleSheet(choiceType) {
             if (!GOOGLE_SHEET_WEBAPP_URL) return;
 
@@ -328,7 +324,7 @@
                     gender: userGender || '미선택',
                     age: userAge || '미선택',
                     choice: choiceType,
-                    mode: currentMode || '미확인' // 게임 또는 영상 전송
+                    mode: currentMode || '미확인'
                 })
             }).catch(err => console.error('전송 실패:', err));
         }
@@ -409,7 +405,6 @@
 
         const videoModalLayer = document.getElementById('videoModalLayer');
         const guideVideoPlayer = document.getElementById('guideVideoPlayer');
-        const closeVideoBtn = document.getElementById('closeVideoBtn');
 
         function openAndPlayGuideVideo() {
             if (!checkInputsValid()) {
@@ -417,7 +412,7 @@
                 return;
             }
 
-            currentMode = '영상'; // 모드 기록
+            currentMode = '영상';
 
             document.getElementById('menuButtons').classList.add('hidden');
             userInfoSection.classList.add('hidden');
@@ -444,8 +439,8 @@
             document.getElementById('eventModal').classList.remove('hidden');
         }
 
+        // 영상이 끝까지 재생되었을 때만 실행
         guideVideoPlayer.addEventListener('ended', finishVideo);
-        closeVideoBtn.addEventListener('click', finishVideo);
 
         async function runGameMode() {
             if (!checkInputsValid()) {
@@ -453,7 +448,7 @@
                 return;
             }
 
-            currentMode = '게임'; // 모드 기록
+            currentMode = '게임';
 
             document.getElementById('menuButtons').classList.add('hidden');
             userInfoSection.classList.add('hidden');
