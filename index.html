@@ -45,13 +45,12 @@
     <div id="marker4" class="tick-marker pointer-events-auto"></div>
     <div id="marker5" class="tick-marker pointer-events-auto"></div>
 
-    <!-- [신규] 릴스/쇼츠 mp4 영상 재생 전용 전체화면 레이어 -->
+    <!-- 릴스/쇼츠 mp4 영상 재생 전용 전체화면 레이어 -->
     <div id="videoModalLayer" class="fixed inset-0 z-50 bg-black flex items-center justify-center hidden">
         <video id="guideVideoPlayer" class="w-full h-full object-contain" playsinline preload="auto">
             <source src="guide.mp4" type="video/mp4">
             영상을 지원하지 않는 브라우저입니다.
         </video>
-        <!-- 영상 건너뛰기 / 닫기 버튼 -->
         <button id="closeVideoBtn" class="absolute top-4 right-4 bg-black/60 text-white text-xs px-3.5 py-1.5 rounded-full border border-white/30 active:scale-95">
             ✕ 닫기
         </button>
@@ -60,8 +59,8 @@
     <div class="ui-layer flex flex-col justify-between p-6">
         <!-- 상단 헤더 영역 -->
         <div class="mt-4 space-y-2">
-            <!-- 타이틀 카드 -->
-            <div class="text-center bg-white/90 backdrop-blur-sm p-3.5 rounded-2xl shadow-sm border border-gray-100">
+            <!-- [초록 원] 타이틀 카드 (현장요원 3회 터치 시 리셋 영역) -->
+            <div id="adminResetZone" class="pointer-events-auto text-center bg-white/90 backdrop-blur-sm p-3.5 rounded-2xl shadow-sm border border-gray-100 cursor-pointer select-none active:bg-gray-100/80 transition-colors">
                 <h1 class="text-lg font-bold text-gray-800 flex items-center justify-center gap-1">
                     🐶 진드기 체크 포인트
                 </h1>
@@ -125,11 +124,25 @@
                 </div>
             </div>
 
-            <!-- 최종 이벤트 모달 (공용) -->
-            <div id="eventModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-red-50">
-                <div class="text-4xl mb-2">🎉</div>
-                <h2 id="modalTitle" class="text-2xl font-black text-gray-800 mb-1">모두 완료!</h2>
-                <p id="modalDesc" class="text-gray-600 text-xs mb-4">선물 수령을 위해 아래 채널을 추가해 주세요!</p>
+            <!-- [중복 참여 차단 안내 카드] -->
+            <div id="alreadyJoinedCard" class="hidden pointer-events-auto bg-white/95 backdrop-blur-sm p-5 rounded-2xl shadow-xl text-center border-2 border-amber-300 mb-3">
+                <div class="text-3xl mb-1">🎁</div>
+                <h3 class="text-base font-bold text-gray-800 mb-1">이미 참여를 완료하셨습니다</h3>
+                <p class="text-xs text-gray-500 leading-relaxed mb-3">이벤트 선물 수령은 1인 1회로 제한됩니다.<br>참여해 주셔서 감사합니다!</p>
+                <div class="py-1">
+                    <img src="logo.png" alt="지원단 로고" class="h-10 max-w-[220px] mx-auto object-contain opacity-90" onerror="this.style.display='none'">
+                </div>
+            </div>
+
+            <!-- 최종 이벤트 모달창 -->
+            <div id="eventModal" class="hidden pointer-events-auto bg-white p-5 rounded-3xl shadow-2xl text-center border-4 border-red-50">
+                <div class="flex items-center justify-center gap-1.5 mb-1">
+                    <span class="text-2xl">🎉</span>
+                    <h2 id="modalTitle" class="text-xl font-black text-gray-800">진드기 완벽 퇴치!</h2>
+                </div>
+                <p id="modalDesc" class="text-gray-600 text-xs font-medium mb-3.5 leading-tight">
+                    팔로우나 구독하고 현장요원에게 화면을 보여주세요
+                </p>
                 
                 <div class="space-y-2.5">
                     <button id="instaBtn" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 shadow-md text-sm active:scale-95">
@@ -153,6 +166,7 @@
 
     <script>
         const GOOGLE_SHEET_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby2irHshS-7F04tlUAipYDwJhHdsyq4RgIMtAyhV4WyFiCnhc4Q-0MW7JBLZmRhudf8RA/exec';
+        const STORAGE_KEY = 'gncdc_puppy_check_participated';
 
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
@@ -209,7 +223,9 @@
                 dogGroup.add(wrapper);
 
                 document.getElementById('loading-indicator').style.display = 'none';
-                document.getElementById('menuButtons').classList.remove('hidden');
+                
+                // 중복 참여 여부 확인 후 메뉴 표시
+                checkAlreadyParticipated();
             },
             undefined,
             function (error) {
@@ -217,6 +233,45 @@
                 document.getElementById('loading-indicator').innerText = '모델 로드 실패. 파일명을 확인하세요.';
             }
         );
+
+        /* ----------------------------------------------------
+           [신규] 중복 참여 확인 & 관리자 3회 터치 초기화 로직
+        ---------------------------------------------------- */
+        function checkAlreadyParticipated() {
+            const hasJoined = localStorage.getItem(STORAGE_KEY);
+            if (hasJoined === 'true') {
+                // 이미 참여한 경우 메뉴와 입력란 숨기고 안내창 표시
+                document.getElementById('menuButtons').classList.add('hidden');
+                document.getElementById('userInfoSection').classList.add('hidden');
+                document.getElementById('alreadyJoinedCard').classList.remove('hidden');
+            } else {
+                // 처음 참여하는 경우 정상 메뉴 표시
+                document.getElementById('menuButtons').classList.remove('hidden');
+                document.getElementById('userInfoSection').classList.remove('hidden');
+                document.getElementById('alreadyJoinedCard').classList.add('hidden');
+            }
+        }
+
+        // 상단 초록원 영역 3회 연속 터치 감지
+        let adminClickCount = 0;
+        let adminClickTimer = null;
+        document.getElementById('adminResetZone').addEventListener('click', () => {
+            adminClickCount++;
+            clearTimeout(adminClickTimer);
+
+            // 1.5초 안에 3번 연속 터치하면 리셋 실행
+            adminClickTimer = setTimeout(() => {
+                adminClickCount = 0;
+            }, 1500);
+
+            if (adminClickCount >= 3) {
+                adminClickCount = 0;
+                localStorage.removeItem(STORAGE_KEY);
+                alert('🔑 [현장요원] 참여 기록이 초기화되었습니다!\n새로운 참가자가 시작할 수 있습니다.');
+                resetToHome();
+                checkAlreadyParticipated();
+            }
+        });
 
         const markerPositions = [
             new THREE.Vector3(1.18, 0.70, -0.21),
@@ -280,12 +335,15 @@
             }).catch(err => console.error('전송 실패:', err));
         }
 
+        // 인스타/유튜브 버튼 터치 시 참여 완료 플래그 저장
         document.getElementById('instaBtn').addEventListener('click', () => {
+            localStorage.setItem(STORAGE_KEY, 'true');
             sendStatsToGoogleSheet('인스타그램');
             window.open('https://www.instagram.com/gncdc_2019/', '_blank');
         });
 
         document.getElementById('youtubeBtn').addEventListener('click', () => {
+            localStorage.setItem(STORAGE_KEY, 'true');
             sendStatsToGoogleSheet('유튜브');
             window.open('https://www.youtube.com/@%EA%B2%BD%EC%83%81%EB%82%A8%EB%8F%84%EA%B0%90%EC%97%BC%EB%B3%91%EA%B4%80%EB%A6%AC%EC%A7%80', '_blank');
         });
@@ -350,9 +408,6 @@
             descBox.style.opacity = '1';
         }
 
-        /* ----------------------------------------------------
-           [대체된 부분] MP4 영상 재생 로직 (릴스 제작본 재생)
-        ---------------------------------------------------- */
         const videoModalLayer = document.getElementById('videoModalLayer');
         const guideVideoPlayer = document.getElementById('guideVideoPlayer');
         const closeVideoBtn = document.getElementById('closeVideoBtn');
@@ -368,12 +423,10 @@
             document.getElementById('eventModal').classList.add('hidden');
             isIdle = false;
 
-            // 영상 모달 띄우고 재생
             videoModalLayer.classList.remove('hidden');
             guideVideoPlayer.currentTime = 0;
-            guideVideoPlayer.muted = false; // 소리 켜기
+            guideVideoPlayer.muted = false;
             guideVideoPlayer.play().catch(err => {
-                // 브라우저 자동재생 정책 방어 (음소거 후 재생)
                 console.log('소리 켠 상태 재생 실패, 음소거 시도:', err);
                 guideVideoPlayer.muted = true;
                 guideVideoPlayer.play();
@@ -385,19 +438,13 @@
             videoModalLayer.classList.add('hidden');
             isIdle = true;
 
-            // 영상 종료 시 선물 수령 모달창 노출
-            document.getElementById('modalTitle').innerText = '교육 완료!';
+            document.getElementById('modalTitle').innerText = '진드기 교육 완료!';
             document.getElementById('eventModal').classList.remove('hidden');
         }
 
-        // 영상이 다 끝났을 때 자동 실행
         guideVideoPlayer.addEventListener('ended', finishVideo);
-        // 닫기 버튼을 눌렀을 때 실행
         closeVideoBtn.addEventListener('click', finishVideo);
 
-        /* ----------------------------------------------------
-           게임 모드 로직
-        ---------------------------------------------------- */
         async function runGameMode() {
             if (!checkInputsValid()) {
                 alert('상단에서 성별과 연령대를 먼저 선택해주세요!');
@@ -485,7 +532,7 @@
             isIdle = true;
             isGameMode = false;
             
-            document.getElementById('menuButtons').classList.remove('hidden');
+            checkAlreadyParticipated();
             checkInputsValid();
         }
 
