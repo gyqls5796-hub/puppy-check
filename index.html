@@ -76,7 +76,7 @@
                 </div>
             </div>
 
-            <!-- 성별 / 연령 선택 드롭박스 카드 (항상 정상 노출) -->
+            <!-- 성별 / 연령 선택 드롭박스 카드 -->
             <div id="userInfoSection" class="pointer-events-auto bg-white/90 backdrop-blur-sm p-3 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-2 gap-2">
                 <div>
                     <label class="block text-[11px] font-bold text-gray-600 mb-1">성별</label>
@@ -108,7 +108,7 @@
                 <p id="descText" class="text-base font-semibold leading-relaxed"></p>
             </div>
 
-            <!-- 시작 메뉴 버튼 & 로고 (언제든지 게임/영상 실행 가능) -->
+            <!-- 시작 메뉴 버튼 & 로고 -->
             <div id="menuButtons" class="hidden flex flex-col items-center pointer-events-auto">
                 <div class="w-full space-y-2 mb-3">
                     <button id="startGameBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg transition-all active:scale-95 text-base flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
@@ -118,13 +118,12 @@
                         ▶ 반려동물 진드기 체크 부위 확인하기
                     </button>
                 </div>
-                <!-- 첫 화면 하단 지원단 로고 -->
                 <div class="flex justify-center items-center py-2">
                     <img src="logo.png" alt="지원단 로고" class="h-14 max-w-[280px] w-auto object-contain drop-shadow-sm opacity-95" onerror="this.style.display='none'">
                 </div>
             </div>
 
-            <!-- 최종 완료 모달창 (선물 중복 참여만 분기 처리) -->
+            <!-- 최종 완료 모달창 -->
             <div id="eventModal" class="hidden pointer-events-auto bg-white p-5 rounded-3xl shadow-2xl text-center border-4 border-red-50">
                 <div class="flex items-center justify-center gap-1.5 mb-1">
                     <span class="text-2xl">🎉</span>
@@ -153,7 +152,7 @@
                     <p class="text-[11px] text-amber-700">선물 증정은 1인 1회로 제한됩니다.<br>참여해 주셔서 감사합니다!</p>
                 </div>
 
-                <!-- 공통 하단 버튼 (홈페이지 바로가기 및 다시하기) -->
+                <!-- 공통 하단 버튼 -->
                 <div class="space-y-2.5 mt-2.5">
                     <button onclick="window.open('http://gncdc.or.kr/', '_blank')" title="경상남도감염병관리지원단 홈페이지 바로가기" class="w-full flex items-center justify-center bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 py-3 px-4 rounded-xl shadow-sm transition-all active:scale-95">
                         <img src="logo.png" alt="경상남도감염병관리지원단 홈페이지 이동" class="h-10 max-w-[260px] w-auto object-contain">
@@ -254,7 +253,6 @@
             }
         });
 
-        // 모달창 띄울 때 선물 수령 여부 체크하여 버튼 표시/숨김 분기
         function updateModalGiftState() {
             const hasJoined = localStorage.getItem(STORAGE_KEY);
             const freshUserSection = document.getElementById('freshUserSection');
@@ -292,6 +290,8 @@
 
         let userGender = '';
         let userAge = '';
+        let currentMode = ''; // [신규] '게임' or '영상' 추적 변수
+
         const genderSelect = document.getElementById('genderSelect');
         const ageSelect = document.getElementById('ageSelect');
         const startGameBtn = document.getElementById('startGameBtn');
@@ -316,6 +316,7 @@
         genderSelect.addEventListener('change', checkInputsValid);
         ageSelect.addEventListener('change', checkInputsValid);
 
+        // [수정됨] mode(게임/영상) 데이터를 함께 전송
         function sendStatsToGoogleSheet(choiceType) {
             if (!GOOGLE_SHEET_WEBAPP_URL) return;
 
@@ -326,12 +327,12 @@
                 body: JSON.stringify({
                     gender: userGender || '미선택',
                     age: userAge || '미선택',
-                    choice: choiceType
+                    choice: choiceType,
+                    mode: currentMode || '미확인' // 게임 또는 영상 전송
                 })
             }).catch(err => console.error('전송 실패:', err));
         }
 
-        // 인스타/유튜브 버튼 터치 시 참여 완료 플래그 저장 및 섹션 전환
         document.getElementById('instaBtn').addEventListener('click', () => {
             localStorage.setItem(STORAGE_KEY, 'true');
             sendStatsToGoogleSheet('인스타그램');
@@ -416,6 +417,8 @@
                 return;
             }
 
+            currentMode = '영상'; // 모드 기록
+
             document.getElementById('menuButtons').classList.add('hidden');
             userInfoSection.classList.add('hidden');
             document.getElementById('eventModal').classList.add('hidden');
@@ -449,6 +452,8 @@
                 alert('상단에서 성별과 연령대를 먼저 선택해주세요!');
                 return;
             }
+
+            currentMode = '게임'; // 모드 기록
 
             document.getElementById('menuButtons').classList.add('hidden');
             userInfoSection.classList.add('hidden');
@@ -523,6 +528,7 @@
             ageSelect.value = '';
             userGender = '';
             userAge = '';
+            currentMode = '';
 
             controls.enabled = false;
             camera.position.set(0, 0.5, 8);
