@@ -12,7 +12,7 @@
     <style>
         body { margin: 0; overflow: hidden; background-color: #f3f4f6; user-select: none; -webkit-user-select: none; }
         #canvas-container { width: 100%; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
-        .ui-layer { position: relative; z-index: 10; max-width: 430px; margin: 0 auto; height: 100vh; pointer-events: none; }
+        .ui-layer { position: relative; z-index: 10; max-width: 440px; margin: 0 auto; height: 100vh; pointer-events: none; }
         .pointer-events-auto { pointer-events: auto; }
         
         /* [게임 모드] 진드기 마커 */
@@ -67,56 +67,60 @@
         </video>
     </div>
 
-    <div class="ui-layer flex flex-col justify-between p-5">
+    <div class="ui-layer flex flex-col justify-between p-4 sm:p-5">
         <!-- 상단 헤더 영역 -->
-        <div class="mt-3 space-y-2.5">
-            <!-- 상단 타이틀 카드 -->
-            <div id="adminResetZone" class="pointer-events-auto text-center bg-white/95 backdrop-blur-sm p-4 rounded-2xl shadow-sm border border-gray-100 cursor-pointer select-none active:bg-gray-100/80 transition-colors">
-                <h1 id="mainTitle" class="text-lg font-extrabold text-gray-800 flex items-center justify-center gap-1.5 tracking-tight">
+        <div class="mt-2 space-y-2.5">
+            <!-- 상단 타이틀 카드 (글자 크기 전반 확대) -->
+            <div id="adminResetZone" class="pointer-events-auto text-center bg-white/95 backdrop-blur-sm px-4 pt-3.5 pb-2.5 rounded-2xl shadow-sm border border-gray-100 cursor-pointer select-none active:bg-gray-100/80 transition-colors">
+                <h1 id="mainTitle" class="text-xl font-black text-gray-800 flex items-center justify-center gap-1.5 tracking-tight">
                     🐶 나와 반려동물을 위한 진드기 체크
                 </h1>
                 
                 <!-- 첫 화면 안내 문구 확대 -->
-                <p id="homeSubTitle" class="text-sm font-medium text-gray-600 mt-1">
+                <p id="homeSubTitle" class="text-base font-semibold text-gray-600 mt-1">
                     산책 후 필수! 우리 둘의 건강을 위해 함께 확인해요
                 </p>
 
-                <!-- 게임 모드 전용 5개 체크포인트 표시 (글자 크기 및 여백 확대) -->
-                <div id="checkPointsContainer" class="hidden text-[13px] leading-relaxed mt-1.5 flex flex-wrap justify-center items-center gap-x-2 gap-y-1">
-                    <span id="cp-0" class="checkpoint-item checkpoint-active">귓속</span>
-                    <span class="text-gray-300">•</span>
-                    <span id="cp-1" class="checkpoint-item checkpoint-active">목주변</span>
-                    <span class="text-gray-300">•</span>
-                    <span id="cp-2" class="checkpoint-item checkpoint-active">발가락사이</span>
-                    <span class="text-gray-300">•</span>
-                    <span id="cp-3" class="checkpoint-item checkpoint-active">꼬리(항문·사타구니)</span>
-                    <span class="text-gray-300">•</span>
-                    <span id="cp-4" class="checkpoint-item checkpoint-active">몸 전체</span>
+                <!-- 게임 모드 전용 5개 체크포인트 (글자 크기 16px급 확대) -->
+                <div id="checkPointsContainer" class="hidden text-base leading-snug mt-1.5 space-y-1">
+                    <div class="flex justify-center items-center gap-x-2.5">
+                        <span id="cp-0" class="checkpoint-item checkpoint-active">귓속</span>
+                        <span class="text-gray-300">•</span>
+                        <span id="cp-1" class="checkpoint-item checkpoint-active">목주변</span>
+                        <span class="text-gray-300">•</span>
+                        <span id="cp-2" class="checkpoint-item checkpoint-active">발가락사이</span>
+                    </div>
+                    <div class="flex justify-center items-center gap-x-2.5">
+                        <span id="cp-3" class="checkpoint-item checkpoint-active">꼬리(항문 및 사타구니)</span>
+                        <span class="text-gray-300">•</span>
+                        <span id="cp-4" class="checkpoint-item checkpoint-active">몸 전체</span>
+                    </div>
                 </div>
                 
-                <div id="gameScoreBoard" class="hidden mt-2.5 pt-2 border-t border-gray-100 flex justify-around items-center">
-                    <div class="text-sm font-bold text-gray-700">남은 진드기</div>
-                    <div class="text-xl font-black text-red-500"><span id="remainCount">5</span> / 5</div>
+                <!-- 남은 진드기 카운트 영역 확대 -->
+                <div id="gameScoreBoard" class="hidden mt-2 pt-1.5 border-t border-gray-100 flex justify-around items-center">
+                    <div class="text-base font-bold text-gray-700">남은 진드기</div>
+                    <div class="text-2xl font-black text-red-500 leading-none"><span id="remainCount">5</span> / 5</div>
                 </div>
 
-                <div id="loading-indicator" class="mt-2 text-red-500 font-bold text-sm animate-pulse">
+                <div id="loading-indicator" class="mt-2 text-red-500 font-bold text-base animate-pulse">
                     3D 모델을 준비하고 있습니다...
                 </div>
             </div>
 
-            <!-- 성별 / 연령 선택 드롭박스 카드 (글자 크기 확대) -->
-            <div id="userInfoSection" class="pointer-events-auto bg-white/95 backdrop-blur-sm p-3.5 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-2 gap-3">
+            <!-- 성별 / 연령 선택 드롭박스 카드 (글자 크기 및 입력창 확대) -->
+            <div id="userInfoSection" class="pointer-events-auto bg-white/95 backdrop-blur-sm p-4 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1">성별</label>
-                    <select id="genderSelect" class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-sm font-semibold rounded-xl p-2.5 focus:ring-2 focus:ring-amber-400 focus:outline-none">
+                    <label class="block text-sm font-bold text-gray-800 mb-1">성별</label>
+                    <select id="genderSelect" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-base font-bold rounded-xl p-2.5 focus:ring-2 focus:ring-amber-400 focus:outline-none">
                         <option value="">선택해주세요</option>
                         <option value="남성">남성</option>
                         <option value="여성">여성</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1">연령대</label>
-                    <select id="ageSelect" class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-sm font-semibold rounded-xl p-2.5 focus:ring-2 focus:ring-amber-400 focus:outline-none">
+                    <label class="block text-sm font-bold text-gray-800 mb-1">연령대</label>
+                    <select id="ageSelect" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-base font-bold rounded-xl p-2.5 focus:ring-2 focus:ring-amber-400 focus:outline-none">
                         <option value="">선택해주세요</option>
                         <option value="10대 이하">10대 이하</option>
                         <option value="20대">20대</option>
@@ -133,16 +137,16 @@
         <!-- 하단 영역 (버튼 및 로고) -->
         <div class="mb-3">
             <div id="descBox" class="desc-box opacity-0 bg-gray-900/95 text-white p-4 rounded-2xl mb-3 shadow-xl text-center border border-gray-700">
-                <p id="descText" class="text-lg font-bold leading-relaxed"></p>
+                <p id="descText" class="text-xl font-black leading-relaxed"></p>
             </div>
 
-            <!-- 시작 메뉴 버튼 & 로고 -->
+            <!-- 시작 메뉴 버튼 (글자 크기 확대) & 로고 -->
             <div id="menuButtons" class="hidden flex flex-col items-center pointer-events-auto">
                 <div class="w-full space-y-2.5 mb-2">
-                    <button id="startGameBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-extrabold py-4 px-4 rounded-2xl shadow-lg transition-all active:scale-95 text-base flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
+                    <button id="startGameBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-4 px-4 rounded-2xl shadow-lg transition-all active:scale-95 text-lg flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
                         🎮 숨은 진드기 잡기 게임
                     </button>
-                    <button id="startVideoBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-extrabold py-3.5 px-4 rounded-2xl shadow-md transition-all active:scale-95 text-sm flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
+                    <button id="startVideoBtn" class="w-full bg-red-500 hover:bg-red-600 text-white font-extrabold py-3.5 px-4 rounded-2xl shadow-md transition-all active:scale-95 text-base flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
                         ▶ 반려동물 진드기 체크 부위 확인하기
                     </button>
                 </div>
@@ -151,42 +155,42 @@
                 </div>
             </div>
 
-            <!-- 최종 완료 모달창 (텍스트 크기 확대) -->
+            <!-- 최종 완료 모달창 (전체 텍스트 확대) -->
             <div id="eventModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-red-50">
-                <div class="flex items-center justify-center gap-1.5 mb-1.5">
-                    <span class="text-2xl">🎉</span>
-                    <h2 id="modalTitle" class="text-2xl font-black text-gray-800">진드기 완벽 퇴치!</h2>
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span class="text-3xl">🎉</span>
+                    <h2 id="modalTitle" class="text-3xl font-black text-gray-800">진드기 완벽 퇴치!</h2>
                 </div>
 
                 <!-- 1. 미참여 시 표시되는 선물 수령 영역 -->
                 <div id="freshUserSection">
-                    <p class="text-gray-700 text-sm font-semibold mb-4 leading-normal">
+                    <p class="text-gray-700 text-base font-bold mb-4 leading-normal">
                         팔로우나 구독하고 현장요원에게 화면을 보여주세요
                     </p>
                     <div class="space-y-3">
-                        <button id="instaBtn" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-extrabold py-3.5 px-4 rounded-xl hover:opacity-90 shadow-md text-base active:scale-95">
+                        <button id="instaBtn" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-black py-4 px-4 rounded-xl hover:opacity-90 shadow-md text-lg active:scale-95">
                             인스타그램 팔로우
                         </button>
-                        <button id="youtubeBtn" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white font-extrabold py-3.5 px-4 rounded-xl hover:opacity-90 shadow-md text-base active:scale-95">
+                        <button id="youtubeBtn" class="w-full flex items-center justify-center gap-2 bg-red-600 text-white font-black py-4 px-4 rounded-xl hover:opacity-90 shadow-md text-lg active:scale-95">
                             유튜브 구독하기
                         </button>
                     </div>
                 </div>
 
                 <!-- 2. 이미 선물을 수령한 경우 표시되는 중복 차단 영역 -->
-                <div id="alreadyJoinedSection" class="hidden my-3 p-3.5 bg-amber-50 rounded-xl border border-amber-200">
-                    <div class="text-3xl mb-1">🎁</div>
-                    <p class="text-sm font-bold text-amber-900 mb-0.5">이미 이벤트 선물을 수령하셨습니다</p>
-                    <p class="text-xs text-amber-700">선물 증정은 1인 1회로 제한됩니다.<br>참여해 주셔서 감사합니다!</p>
+                <div id="alreadyJoinedSection" class="hidden my-3 p-4 bg-amber-50 rounded-xl border border-amber-200">
+                    <div class="text-4xl mb-1">🎁</div>
+                    <p class="text-base font-black text-amber-900 mb-0.5">이미 이벤트 선물을 수령하셨습니다</p>
+                    <p class="text-sm font-semibold text-amber-700">선물 증정은 1인 1회로 제한됩니다.<br>참여해 주셔서 감사합니다!</p>
                 </div>
 
                 <!-- 공통 하단 버튼 -->
-                <div class="space-y-2.5 mt-3">
+                <div class="space-y-3 mt-3.5">
                     <button onclick="window.open('http://gncdc.or.kr/', '_blank')" title="경상남도감염병관리지원단 홈페이지 바로가기" class="w-full flex items-center justify-center bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 py-3 px-4 rounded-xl shadow-sm transition-all active:scale-95">
-                        <img src="logo.png" alt="경상남도감염병관리지원단 홈페이지 이동" class="h-10 max-w-[260px] w-auto object-contain">
+                        <img src="logo.png" alt="경상남도감염병관리지원단 홈페이지 이동" class="h-11 max-w-[270px] w-auto object-contain">
                     </button>
                     
-                    <button id="replayBtn" class="w-full flex items-center justify-center gap-2 bg-gray-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-gray-700 text-sm mt-1">
+                    <button id="replayBtn" class="w-full flex items-center justify-center gap-2 bg-gray-600 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-gray-700 text-base mt-1">
                         🔄 다시 하기 / 처음으로
                     </button>
                 </div>
@@ -564,7 +568,7 @@
             }
         }
 
-        const pointNames = ['귓속', '목주변', '발가락사이', '꼬리(항문·사타구니)', '몸 전체'];
+        const pointNames = ['귓속', '목주변', '발가락사이', '꼬리(항문 및 사타구니)', '몸 전체'];
 
         htmlMarkers.forEach((marker, index) => {
             marker.addEventListener('click', (e) => {
