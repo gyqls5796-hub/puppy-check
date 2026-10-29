@@ -136,9 +136,9 @@
 
         <!-- 하단 영역 (버튼 및 로고) -->
         <div class="mb-3">
-            <!-- [수정됨] 글자 짤림 방지 및 모바일 가독성 최적화 박스 -->
-            <div id="descBox" class="desc-box opacity-0 bg-gray-900/95 text-white px-4 py-3.5 rounded-2xl mb-3 shadow-xl text-center border border-gray-700">
-                <p id="descText" class="text-base sm:text-lg font-bold leading-snug break-keep"></p>
+            <!-- [수정됨] 진드기 찾았을 때 안내 상자 글자 크기 확대 -->
+            <div id="descBox" class="desc-box opacity-0 bg-gray-900/95 text-white px-5 py-4 rounded-2xl mb-3 shadow-xl text-center border border-gray-700">
+                <p id="descText" class="text-lg sm:text-xl font-black leading-snug break-keep"></p>
             </div>
 
             <!-- 시작 메뉴 버튼 & 로고 -->
@@ -470,8 +470,8 @@
 
         const descBox = document.getElementById('descBox');
         const descText = document.getElementById('descText');
-        function showDescription(text) {
-            descText.innerHTML = text;
+        function showDescription(htmlContent) {
+            descText.innerHTML = htmlContent;
             descBox.style.opacity = '1';
         }
 
@@ -587,8 +587,15 @@
                 if (remainTicks === 0) {
                     endGame();
                 } else {
-                    // [개선] 2줄로 나누어 모바일 화면에서 단어가 어색하게 잘리지 않도록 배치
-                    showDescription(`[${pointNames[index]}] 진드기 발견!<br><span class="text-sm font-semibold text-amber-300 mt-0.5 inline-block">남은 진드기: ${remainTicks}마리</span>`);
+                    // [수정됨] 진드기 발견 시 문구 크기 대폭 확대 (부위명: 20~24px, 남은 수량: 16~18px)
+                    showDescription(`
+                        <div class="text-xl sm:text-2xl font-black text-white tracking-tight">
+                            [${pointNames[index]}] 진드기 발견!
+                        </div>
+                        <div class="text-base sm:text-lg font-extrabold text-amber-300 mt-1">
+                            남은 진드기: ${remainTicks}마리
+                        </div>
+                    `);
                 }
             });
         });
