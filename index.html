@@ -15,7 +15,7 @@
         .ui-layer { position: relative; z-index: 10; max-width: 430px; margin: 0 auto; height: 100vh; pointer-events: none; }
         .pointer-events-auto { pointer-events: auto; }
         
-        /* [게임 모드] 진드기 마커 - 살아있는 벌레 움직임 */
+        /* [게임 모드] 진드기 마커 (크기 약 1% 확대 적용: 14.14px) */
         .tick-marker {
             position: absolute;
             display: none;
@@ -26,7 +26,7 @@
             width: 44px;
             height: 44px;
             background-image: url('tick.png');
-            background-size: 14px 14px;
+            background-size: 14.14px 14.14px;
             background-repeat: no-repeat;
             background-position: center;
             transform: translate(-50%, -50%) rotate(var(--rot)) scale(var(--scale));
@@ -34,6 +34,20 @@
         }
 
         .desc-box { transition: opacity 0.5s ease-in-out; }
+
+        /* 체크포인트 부위 텍스트 스타일 */
+        .checkpoint-item {
+            transition: color 0.3s ease, text-decoration 0.3s ease;
+        }
+        .checkpoint-active {
+            color: #2563eb; /* 선명한 파란색 */
+            font-weight: 700;
+        }
+        .checkpoint-done {
+            color: #9ca3af; /* 연한 회색 */
+            text-decoration: line-through;
+            font-weight: 400;
+        }
     </style>
 </head>
 <body>
@@ -62,7 +76,19 @@
                 <h1 class="text-lg font-bold text-gray-800 flex items-center justify-center gap-1">
                     🐶 진드기 체크 포인트
                 </h1>
-                <p id="subTitle" class="text-xs text-gray-500 mt-0.5">주요 호발 부위를 확인하고 퇴치하세요</p>
+                
+                <!-- 5개 체크포인트 표시 (파란색 -> 발견 시 회색 변경) -->
+                <div id="checkPointsContainer" class="text-[11px] leading-relaxed mt-1 flex flex-wrap justify-center items-center gap-x-1.5 gap-y-0.5">
+                    <span id="cp-0" class="checkpoint-item checkpoint-active">귓속</span>
+                    <span class="text-gray-300 text-[10px]">•</span>
+                    <span id="cp-1" class="checkpoint-item checkpoint-active">목주변</span>
+                    <span class="text-gray-300 text-[10px]">•</span>
+                    <span id="cp-2" class="checkpoint-item checkpoint-active">발가락사이</span>
+                    <span class="text-gray-300 text-[10px]">•</span>
+                    <span id="cp-3" class="checkpoint-item checkpoint-active">꼬리(항문 및 사타구니)</span>
+                    <span class="text-gray-300 text-[10px]">•</span>
+                    <span id="cp-4" class="checkpoint-item checkpoint-active">몸 전체</span>
+                </div>
                 
                 <div id="gameScoreBoard" class="hidden mt-2 pt-2 border-t border-gray-100 flex justify-around items-center">
                     <div class="text-xs font-semibold text-gray-600">남은 진드기</div>
@@ -274,7 +300,6 @@
             new THREE.Vector3(-0.08, -0.28, -0.39)
         ];
 
-        // 각 진드기마다 고유한 무작위 움직임 주기/방향을 부여하기 위한 파라미터
         const tickMoveParams = [
             { speedX: 2.3, speedY: 1.8, rangeX: 0.04, rangeY: 0.04, phase: 0.5, baseRot: 45 },
             { speedX: 1.9, speedY: 2.5, rangeX: 0.035, rangeY: 0.05, phase: 1.2, baseRot: 120 },
@@ -374,7 +399,6 @@
             });
         }
 
-        // [수정됨] 실시간으로 움직이는 좌표를 받아 화면에 투영하고 꿈틀거리는 회전 반영
         function updateMarkerPosition(markerElement, localPos, index, elapsedTime) {
             const worldPos = localPos.clone().applyMatrix4(dogGroup.matrixWorld);
             const toMarker = worldPos.clone().sub(camera.position);
@@ -397,10 +421,10 @@
                 }
             }
 
-            const dynamicScale = Math.min(Math.max(6.0 / dist, 0.8), 3.0);
+            // 크기 약 1% 확대 적용 (6.0 -> 6.06, 최소 0.81, 최대 3.03)
+            const dynamicScale = Math.min(Math.max(6.06 / dist, 0.81), 3.03);
             markerElement.style.setProperty('--scale', dynamicScale.toFixed(2));
 
-            // 기어갈 때 좌우로 몸을 살짝 흔드는 비틀림(Wiggle) 회전각 계산
             const param = tickMoveParams[index];
             const wiggleRot = param.baseRot + Math.sin(elapsedTime * 6 + param.phase) * 18;
             markerElement.style.setProperty('--rot', `${wiggleRot.toFixed(1)}deg`);
@@ -458,6 +482,26 @@
 
         guideVideoPlayer.addEventListener('ended', finishVideo);
 
+        // 체크포인트 텍스트 초기화 (모두 파란색 활성화)
+        function resetCheckPointsUI() {
+            for (let i = 0; i < 5; i++) {
+                const el = document.getElementById(`cp-${i}`);
+                if (el) {
+                    el.classList.remove('checkpoint-done');
+                    el.classList.add('checkpoint-active');
+                }
+            }
+        }
+
+        // 특정 부위 진드기를 찾았을 때 회색으로 변경
+        function completeCheckPointUI(index) {
+            const el = document.getElementById(`cp-${index}`);
+            if (el) {
+                el.classList.remove('checkpoint-active');
+                el.classList.add('checkpoint-done');
+            }
+        }
+
         async function runGameMode() {
             if (!checkInputsValid()) {
                 alert('상단에서 성별과 연령대를 먼저 선택해주세요!');
@@ -476,6 +520,7 @@
             remainTicks = 5;
             document.getElementById('remainCount').innerText = remainTicks;
             document.getElementById('gameScoreBoard').classList.remove('hidden');
+            resetCheckPointsUI();
 
             new TWEEN.Tween(dogGroup.rotation)
                 .to({ y: 0 }, 800)
@@ -483,14 +528,15 @@
                 .start();
             await moveCamera(new THREE.Vector3(0, 0.5, 6), new THREE.Vector3(0, -0.5, 0), 800);
 
-            showDescription('강아지를 돌리고 확대해보며 꿈틀거리는 진드기 5마리를 찾아 터치하세요!');
+            showDescription('강아지를 돌리고 확대해보며 숨은 진드기 5마리를 찾아 터치하세요!');
 
             for (let i = 0; i < 5; i++) {
                 activeTickFlags[i] = true;
-                // 랜덤한 시작 각도 부여
                 tickMoveParams[i].baseRot = Math.floor(Math.random() * 360);
             }
         }
+
+        const pointNames = ['귓속', '목주변', '발가락사이', '꼬리(항문 및 사타구니)', '몸 전체'];
 
         htmlMarkers.forEach((marker, index) => {
             marker.addEventListener('click', (e) => {
@@ -500,13 +546,16 @@
                 activeTickFlags[index] = false;
                 marker.style.display = 'none';
 
+                // 해당 부위 상단 텍스트를 회색(취소선)으로 전환
+                completeCheckPointUI(index);
+
                 remainTicks--;
                 document.getElementById('remainCount').innerText = remainTicks;
 
                 if (remainTicks === 0) {
                     endGame();
                 } else {
-                    showDescription(`진드기를 잡았습니다! 남은 진드기: ${remainTicks}마리`);
+                    showDescription(`[${pointNames[index]}] 진드기 발견! 남은 진드기: ${remainTicks}마리`);
                 }
             });
         });
@@ -536,6 +585,8 @@
                 htmlMarkers[i].style.display = 'none';
             }
 
+            resetCheckPointsUI();
+
             genderSelect.value = '';
             ageSelect.value = '';
             userGender = '';
@@ -558,7 +609,6 @@
         document.getElementById('startGameBtn').addEventListener('click', runGameMode);
         document.getElementById('replayBtn').addEventListener('click', resetToHome);
 
-        // 시간 측정을 위한 Three.js Clock 객체
         const clock = new THREE.Clock();
 
         function animate() {
@@ -575,20 +625,17 @@
                 controls.update();
             }
 
-            // 게임 모드에서 진드기가 상하좌우로 기어 다니며 꿈틀거리도록 실시간 계산
             if (isGameMode) {
                 for (let i = 0; i < 5; i++) {
                     if (activeTickFlags[i]) {
                         const param = tickMoveParams[i];
                         
-                        // 삼각함수를 합성하여 무작위 경로로 상하좌우를 기어 다니는 오프셋 연산
                         const offsetX = Math.sin(elapsedTime * param.speedX + param.phase) * param.rangeX 
                                       + Math.cos(elapsedTime * (param.speedX * 0.5)) * (param.rangeX * 0.4);
                         const offsetY = Math.cos(elapsedTime * param.speedY + param.phase) * param.rangeY
                                       + Math.sin(elapsedTime * (param.speedY * 0.6)) * (param.rangeY * 0.3);
                         const offsetZ = Math.sin(elapsedTime * param.speedX * 0.7 + param.phase) * (param.rangeX * 0.3);
 
-                        // 기준 위치 + 실시간 오프셋
                         const currentPos = new THREE.Vector3(
                             baseMarkerPositions[i].x + offsetX,
                             baseMarkerPositions[i].y + offsetY,
