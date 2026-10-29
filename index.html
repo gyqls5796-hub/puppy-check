@@ -15,7 +15,7 @@
         .ui-layer { position: relative; z-index: 10; max-width: 430px; margin: 0 auto; height: 100vh; pointer-events: none; }
         .pointer-events-auto { pointer-events: auto; }
         
-        /* [게임 모드] 진드기 마커 */
+        /* [게임 모드] 진드기 마커 - 살아있는 벌레 움직임 */
         .tick-marker {
             position: absolute;
             display: none;
@@ -30,6 +30,7 @@
             background-repeat: no-repeat;
             background-position: center;
             transform: translate(-50%, -50%) rotate(var(--rot)) scale(var(--scale));
+            transition: transform 0.05s linear;
         }
 
         .desc-box { transition: opacity 0.5s ease-in-out; }
@@ -45,7 +46,7 @@
     <div id="marker4" class="tick-marker pointer-events-auto"></div>
     <div id="marker5" class="tick-marker pointer-events-auto"></div>
 
-    <!-- [수정됨] 닫기 버튼을 제거하여 영상을 끝까지 시청하도록 강제하는 레이어 -->
+    <!-- 릴스/쇼츠 mp4 영상 재생 전용 전체화면 레이어 -->
     <div id="videoModalLayer" class="fixed inset-0 z-50 bg-black flex items-center justify-center hidden">
         <video id="guideVideoPlayer" class="w-full h-full object-contain" playsinline preload="auto">
             <source src="guide.mp4" type="video/mp4">
@@ -264,12 +265,22 @@
             }
         }
 
-        const markerPositions = [
+        // 진드기 기본 기준 좌표
+        const baseMarkerPositions = [
             new THREE.Vector3(1.18, 0.70, -0.21),
             new THREE.Vector3(1.12, -0.10, 0.04),
             new THREE.Vector3(0.73, -1.81, -0.22),
             new THREE.Vector3(-1.35, -0.50, 0.0),
             new THREE.Vector3(-0.08, -0.28, -0.39)
+        ];
+
+        // 각 진드기마다 고유한 무작위 움직임 주기/방향을 부여하기 위한 파라미터
+        const tickMoveParams = [
+            { speedX: 2.3, speedY: 1.8, rangeX: 0.04, rangeY: 0.04, phase: 0.5, baseRot: 45 },
+            { speedX: 1.9, speedY: 2.5, rangeX: 0.035, rangeY: 0.05, phase: 1.2, baseRot: 120 },
+            { speedX: 2.7, speedY: 2.1, rangeX: 0.03, rangeY: 0.04, phase: 2.8, baseRot: 210 },
+            { speedX: 1.6, speedY: 2.4, rangeX: 0.045, rangeY: 0.035, phase: 3.5, baseRot: 290 },
+            { speedX: 2.2, speedY: 1.9, rangeX: 0.05, rangeY: 0.045, phase: 4.1, baseRot: 15 }
         ];
 
         let htmlMarkers = [
@@ -363,7 +374,8 @@
             });
         }
 
-        function updateMarkerPosition(markerElement, localPos) {
+        // [수정됨] 실시간으로 움직이는 좌표를 받아 화면에 투영하고 꿈틀거리는 회전 반영
+        function updateMarkerPosition(markerElement, localPos, index, elapsedTime) {
             const worldPos = localPos.clone().applyMatrix4(dogGroup.matrixWorld);
             const toMarker = worldPos.clone().sub(camera.position);
             const dist = toMarker.length();
@@ -387,6 +399,11 @@
 
             const dynamicScale = Math.min(Math.max(6.0 / dist, 0.8), 3.0);
             markerElement.style.setProperty('--scale', dynamicScale.toFixed(2));
+
+            // 기어갈 때 좌우로 몸을 살짝 흔드는 비틀림(Wiggle) 회전각 계산
+            const param = tickMoveParams[index];
+            const wiggleRot = param.baseRot + Math.sin(elapsedTime * 6 + param.phase) * 18;
+            markerElement.style.setProperty('--rot', `${wiggleRot.toFixed(1)}deg`);
 
             const vector = worldPos.clone().project(camera);
             const x = (vector.x * .5 + .5) * window.innerWidth;
@@ -439,7 +456,6 @@
             document.getElementById('eventModal').classList.remove('hidden');
         }
 
-        // 영상이 끝까지 재생되었을 때만 실행
         guideVideoPlayer.addEventListener('ended', finishVideo);
 
         async function runGameMode() {
@@ -467,11 +483,12 @@
                 .start();
             await moveCamera(new THREE.Vector3(0, 0.5, 6), new THREE.Vector3(0, -0.5, 0), 800);
 
-            showDescription('강아지를 돌리고 확대해보며 숨은 진드기 5마리를 찾아 터치하세요!');
+            showDescription('강아지를 돌리고 확대해보며 꿈틀거리는 진드기 5마리를 찾아 터치하세요!');
 
             for (let i = 0; i < 5; i++) {
                 activeTickFlags[i] = true;
-                htmlMarkers[i].style.setProperty('--rot', Math.floor(Math.random() * 360) + 'deg');
+                // 랜덤한 시작 각도 부여
+                tickMoveParams[i].baseRot = Math.floor(Math.random() * 360);
             }
         }
 
@@ -541,9 +558,14 @@
         document.getElementById('startGameBtn').addEventListener('click', runGameMode);
         document.getElementById('replayBtn').addEventListener('click', resetToHome);
 
+        // 시간 측정을 위한 Three.js Clock 객체
+        const clock = new THREE.Clock();
+
         function animate() {
             requestAnimationFrame(animate);
             TWEEN.update();
+
+            const elapsedTime = clock.getElapsedTime();
 
             if (isIdle) {
                 dogGroup.rotation.y += 0.005;
@@ -553,10 +575,27 @@
                 controls.update();
             }
 
+            // 게임 모드에서 진드기가 상하좌우로 기어 다니며 꿈틀거리도록 실시간 계산
             if (isGameMode) {
                 for (let i = 0; i < 5; i++) {
                     if (activeTickFlags[i]) {
-                        updateMarkerPosition(htmlMarkers[i], markerPositions[i]);
+                        const param = tickMoveParams[i];
+                        
+                        // 삼각함수를 합성하여 무작위 경로로 상하좌우를 기어 다니는 오프셋 연산
+                        const offsetX = Math.sin(elapsedTime * param.speedX + param.phase) * param.rangeX 
+                                      + Math.cos(elapsedTime * (param.speedX * 0.5)) * (param.rangeX * 0.4);
+                        const offsetY = Math.cos(elapsedTime * param.speedY + param.phase) * param.rangeY
+                                      + Math.sin(elapsedTime * (param.speedY * 0.6)) * (param.rangeY * 0.3);
+                        const offsetZ = Math.sin(elapsedTime * param.speedX * 0.7 + param.phase) * (param.rangeX * 0.3);
+
+                        // 기준 위치 + 실시간 오프셋
+                        const currentPos = new THREE.Vector3(
+                            baseMarkerPositions[i].x + offsetX,
+                            baseMarkerPositions[i].y + offsetY,
+                            baseMarkerPositions[i].z + offsetZ
+                        );
+
+                        updateMarkerPosition(htmlMarkers[i], currentPos, i, elapsedTime);
                     }
                 }
             }
