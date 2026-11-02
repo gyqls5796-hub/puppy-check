@@ -2,20 +2,56 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
     <title>반려동물 진드기 체크 & 게임</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #f3f4f6; user-select: none; -webkit-user-select: none; }
-        #canvas-container { width: 100%; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
-        .ui-layer { position: relative; z-index: 10; max-width: 440px; margin: 0 auto; height: 100vh; pointer-events: none; }
+        * {
+            -webkit-text-size-adjust: none;
+            text-size-adjust: none;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden !important;
+            background-color: #f3f4f6;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            touch-action: none !important;
+        }
+
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            max-width: 440px;
+            margin: 0 auto;
+            height: 100%;
+            pointer-events: none;
+        }
+
         .pointer-events-auto { pointer-events: auto; }
         
-        /* [게임 모드] 진드기 마커 */
         .tick-marker {
             position: absolute;
             display: none;
@@ -31,6 +67,7 @@
             background-position: center;
             transform: translate(-50%, -50%) rotate(var(--rot)) scale(var(--scale));
             transition: transform 0.05s linear;
+            touch-action: manipulation;
         }
 
         .desc-box { transition: opacity 0.5s ease-in-out; }
@@ -59,7 +96,6 @@
     <div id="marker4" class="tick-marker pointer-events-auto"></div>
     <div id="marker5" class="tick-marker pointer-events-auto"></div>
 
-    <!-- 릴스/쇼츠 mp4 영상 재생 전용 전체화면 레이어 -->
     <div id="videoModalLayer" class="fixed inset-0 z-50 bg-black flex items-center justify-center hidden">
         <video id="guideVideoPlayer" class="w-full h-full object-contain" playsinline preload="auto">
             <source src="guide.mp4" type="video/mp4">
@@ -68,20 +104,16 @@
     </div>
 
     <div class="ui-layer flex flex-col justify-between p-4 sm:p-5">
-        <!-- 상단 헤더 영역 -->
         <div class="mt-2 space-y-2.5">
-            <!-- 상단 타이틀 카드 -->
             <div id="adminResetZone" class="pointer-events-auto text-center bg-white/95 backdrop-blur-sm px-4 pt-3.5 pb-2.5 rounded-2xl shadow-sm border border-gray-100 cursor-pointer select-none active:bg-gray-100/80 transition-colors">
                 <h1 id="mainTitle" class="text-xl font-black text-gray-800 flex items-center justify-center gap-1.5 tracking-tight">
                     🐶 나와 반려동물을 위한 진드기 체크
                 </h1>
                 
-                <!-- 첫 화면 안내 문구 -->
                 <p id="homeSubTitle" class="text-base font-semibold text-gray-600 mt-1">
                     산책 후 필수! 우리 둘의 건강을 위해 함께 확인해요
                 </p>
 
-                <!-- 게임 모드 전용 5개 체크포인트 -->
                 <div id="checkPointsContainer" class="hidden text-base leading-snug mt-1.5 space-y-1">
                     <div class="flex justify-center items-center gap-x-2.5">
                         <span id="cp-0" class="checkpoint-item checkpoint-active">귓속</span>
@@ -97,7 +129,6 @@
                     </div>
                 </div>
                 
-                <!-- 남은 진드기 카운트 영역 -->
                 <div id="gameScoreBoard" class="hidden mt-2 pt-1.5 border-t border-gray-100 flex justify-around items-center">
                     <div class="text-base font-bold text-gray-700">남은 진드기</div>
                     <div class="text-2xl font-black text-red-500 leading-none"><span id="remainCount">5</span> / 5</div>
@@ -108,7 +139,6 @@
                 </div>
             </div>
 
-            <!-- 성별 / 연령 선택 드롭박스 카드 -->
             <div id="userInfoSection" class="pointer-events-auto bg-white/95 backdrop-blur-sm p-4 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-sm font-bold text-gray-800 mb-1">성별</label>
@@ -134,14 +164,11 @@
             </div>
         </div>
 
-        <!-- 하단 영역 (버튼 및 로고) -->
         <div class="mb-3">
-            <!-- [수정됨] 진드기 찾았을 때 안내 상자 글자 크기 확대 -->
             <div id="descBox" class="desc-box opacity-0 bg-gray-900/95 text-white px-5 py-4 rounded-2xl mb-3 shadow-xl text-center border border-gray-700">
                 <p id="descText" class="text-lg sm:text-xl font-black leading-snug break-keep"></p>
             </div>
 
-            <!-- 시작 메뉴 버튼 & 로고 -->
             <div id="menuButtons" class="hidden flex flex-col items-center pointer-events-auto">
                 <div class="w-full space-y-2.5 mb-2">
                     <button id="startGameBtn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-4 px-4 rounded-2xl shadow-lg transition-all active:scale-95 text-lg flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
@@ -156,14 +183,12 @@
                 </div>
             </div>
 
-            <!-- 최종 완료 모달창 -->
             <div id="eventModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-red-50">
                 <div class="flex items-center justify-center gap-2 mb-2">
                     <span class="text-3xl">🎉</span>
                     <h2 id="modalTitle" class="text-3xl font-black text-gray-800">진드기 완벽 퇴치!</h2>
                 </div>
 
-                <!-- 1. 미참여 시 표시되는 선물 수령 영역 -->
                 <div id="freshUserSection">
                     <p class="text-gray-700 text-base font-bold mb-4 leading-normal">
                         팔로우나 구독하고 현장요원에게 화면을 보여주세요
@@ -178,14 +203,12 @@
                     </div>
                 </div>
 
-                <!-- 2. 이미 선물을 수령한 경우 표시되는 중복 차단 영역 -->
                 <div id="alreadyJoinedSection" class="hidden my-3 p-4 bg-amber-50 rounded-xl border border-amber-200">
                     <div class="text-4xl mb-1">🎁</div>
                     <p class="text-base font-black text-amber-900 mb-0.5">이미 이벤트 선물을 수령하셨습니다</p>
                     <p class="text-sm font-semibold text-amber-700">선물 증정은 1인 1회로 제한됩니다.<br>참여해 주셔서 감사합니다!</p>
                 </div>
 
-                <!-- 공통 하단 버튼 -->
                 <div class="space-y-3 mt-3.5">
                     <button onclick="window.open('http://gncdc.or.kr/', '_blank')" title="경상남도감염병관리지원단 홈페이지 바로가기" class="w-full flex items-center justify-center bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 py-3 px-4 rounded-xl shadow-sm transition-all active:scale-95">
                         <img src="logo.png" alt="경상남도감염병관리지원단 홈페이지 이동" class="h-11 max-w-[270px] w-auto object-contain">
@@ -200,6 +223,24 @@
     </div>
 
     <script>
+        // [iOS 사파리 핀치 줌 완벽 차단]
+        window.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
+        window.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
+        window.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
+        
+        // 두 손가락 이상 닿는 순간 브라우저 레벨에서 즉각 무력화
+        window.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
         const GOOGLE_SHEET_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby2irHshS-7F04tlUAipYDwJhHdsyq4RgIMtAyhV4WyFiCnhc4Q-0MW7JBLZmRhudf8RA/exec';
         const STORAGE_KEY = 'gncdc_puppy_check_participated';
         const STORAGE_GENDER_KEY = 'gncdc_saved_gender';
@@ -209,26 +250,27 @@
         const scene = new THREE.Scene();
         scene.background = new THREE.Color('#f3f4f6');
 
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.set(0, 0.5, 8); 
+        // 왜곡 방지를 위해 뷰포트 크기를 안정적으로 확보
+        function getViewportSize() {
+            return {
+                width: window.innerWidth || document.documentElement.clientWidth,
+                height: window.innerHeight || document.documentElement.clientHeight
+            };
+        }
+
+        let vp = getViewportSize();
+        const camera = new THREE.PerspectiveCamera(45, vp.width / vp.height, 0.1, 100);
+        camera.position.set(0, 0.5, 6.2); 
         camera.lookAt(0, -0.5, 0);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(vp.width, vp.height);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.target.set(0, -0.5, 0);
-        controls.minDistance = 2.0;
-        controls.maxDistance = 10;
-        controls.enabled = false;
-
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
         scene.add(ambientLight);
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
         dirLight.position.set(5, 10, 5);
         scene.add(dirLight);
 
@@ -270,6 +312,69 @@
                 document.getElementById('loading-indicator').innerText = '모델 로드 실패. 파일명을 확인하세요.';
             }
         );
+
+        /* -----------------------------------------------------------
+           [안전한 한 손가락 360도 스와이프 회전 컨트롤러]
+           - OrbitControls의 제스처 버그 및 클리핑 완전 해결
+           - 두 손가락 줌을 원천 배제하여 모델 잘림과 화면 찌그러짐 방지
+        ----------------------------------------------------------- */
+        let isDragging = false;
+        let previousTouchX = 0;
+        let previousTouchY = 0;
+        let rotationVelocityX = 0;
+        let rotationVelocityY = 0;
+
+        function onTouchStart(e) {
+            if (!isGameMode) return;
+            // 1개의 손가락 터치만 허용
+            if (e.touches && e.touches.length === 1) {
+                isDragging = true;
+                previousTouchX = e.touches[0].clientX;
+                previousTouchY = e.touches[0].clientY;
+            } else if (!e.touches) {
+                isDragging = true;
+                previousTouchX = e.clientX;
+                previousTouchY = e.clientY;
+            }
+        }
+
+        function onTouchMove(e) {
+            if (!isGameMode || !isDragging) return;
+            let currentX, currentY;
+            if (e.touches && e.touches.length === 1) {
+                currentX = e.touches[0].clientX;
+                currentY = e.touches[0].clientY;
+            } else if (!e.touches) {
+                currentX = e.clientX;
+                currentY = e.clientY;
+            } else {
+                return;
+            }
+
+            const deltaX = currentX - previousTouchX;
+            const deltaY = currentY - previousTouchY;
+
+            rotationVelocityX = deltaX * 0.007;
+            rotationVelocityY = deltaY * 0.004;
+
+            dogGroup.rotation.y += rotationVelocityX;
+            dogGroup.rotation.x = Math.max(-0.35, Math.min(0.35, dogGroup.rotation.x + rotationVelocityY));
+
+            previousTouchX = currentX;
+            previousTouchY = currentY;
+        }
+
+        function onTouchEnd() {
+            isDragging = false;
+        }
+
+        // 터치 및 마우스 이벤트 등록
+        container.addEventListener('touchstart', onTouchStart, { passive: false });
+        window.addEventListener('touchmove', onTouchMove, { passive: false });
+        window.addEventListener('touchend', onTouchEnd);
+        container.addEventListener('mousedown', onTouchStart);
+        window.addEventListener('mousemove', onTouchMove);
+        window.addEventListener('mouseup', onTouchEnd);
 
         let adminClickCount = 0;
         let adminClickTimer = null;
@@ -461,8 +566,9 @@
             markerElement.style.setProperty('--rot', `${wiggleRot.toFixed(1)}deg`);
 
             const vector = worldPos.clone().project(camera);
-            const x = (vector.x * .5 + .5) * window.innerWidth;
-            const y = (vector.y * -.5 + .5) * window.innerHeight;
+            const vpSize = getViewportSize();
+            const x = (vector.x * .5 + .5) * vpSize.width;
+            const y = (vector.y * -.5 + .5) * vpSize.height;
             markerElement.style.left = `${x}px`;
             markerElement.style.top = `${y}px`;
             markerElement.style.display = 'block';
@@ -548,7 +654,6 @@
             document.getElementById('eventModal').classList.add('hidden');
             isIdle = false;
             isGameMode = true;
-            controls.enabled = true;
             
             remainTicks = 5;
             document.getElementById('remainCount').innerText = remainTicks;
@@ -556,12 +661,14 @@
             resetCheckPointsUI();
 
             new TWEEN.Tween(dogGroup.rotation)
-                .to({ y: 0 }, 800)
+                .to({ x: 0, y: 0 }, 800)
                 .easing(TWEEN.Easing.Quadratic.Out)
                 .start();
-            await moveCamera(new THREE.Vector3(0, 0.5, 6), new THREE.Vector3(0, -0.5, 0), 800);
+            
+            // 한눈에 모든 부위가 시원하게 들어오는 최적 앵글
+            await moveCamera(new THREE.Vector3(0, 0.4, 5.4), new THREE.Vector3(0, -0.4, 0), 800);
 
-            showDescription('강아지를 돌리고 확대해보며 숨은 진드기 5마리를 찾아 터치하세요!');
+            showDescription('강아지를 손가락으로 360도 돌려보며 숨은 진드기 5마리를 찾아 터치하세요!');
 
             for (let i = 0; i < 5; i++) {
                 activeTickFlags[i] = true;
@@ -587,7 +694,6 @@
                 if (remainTicks === 0) {
                     endGame();
                 } else {
-                    // [수정됨] 진드기 발견 시 문구 크기 대폭 확대 (부위명: 20~24px, 남은 수량: 16~18px)
                     showDescription(`
                         <div class="text-xl sm:text-2xl font-black text-white tracking-tight">
                             [${pointNames[index]}] 진드기 발견!
@@ -602,11 +708,11 @@
 
         async function endGame() {
             isGameMode = false;
-            controls.enabled = false;
+            isDragging = false;
             document.getElementById('gameScoreBoard').classList.add('hidden');
             descBox.style.opacity = '0';
 
-            await moveCamera(new THREE.Vector3(0, 0.5, 8), new THREE.Vector3(0, -0.5, 0), 1200);
+            await moveCamera(new THREE.Vector3(0, 0.5, 6.2), new THREE.Vector3(0, -0.5, 0), 1200);
             isIdle = true;
 
             document.getElementById('modalTitle').innerText = '진드기 완벽 퇴치!';
@@ -630,13 +736,12 @@
 
             resetCheckPointsUI();
 
-            controls.enabled = false;
-            camera.position.set(0, 0.5, 8);
+            camera.position.set(0, 0.5, 6.2);
             camera.lookAt(0, -0.5, 0);
-            controls.target.set(0, -0.5, 0);
 
             isIdle = true;
             isGameMode = false;
+            isDragging = false;
             currentMode = '';
             
             document.getElementById('menuButtons').classList.remove('hidden');
@@ -667,10 +772,13 @@
 
             if (isIdle) {
                 dogGroup.rotation.y += 0.005;
-            }
-
-            if (controls.enabled) {
-                controls.update();
+                dogGroup.rotation.x = 0;
+            } else if (isGameMode && !isDragging) {
+                // 부드러운 회전 감속 (Damping 감성)
+                rotationVelocityX *= 0.92;
+                rotationVelocityY *= 0.92;
+                dogGroup.rotation.y += rotationVelocityX;
+                dogGroup.rotation.x = Math.max(-0.35, Math.min(0.35, dogGroup.rotation.x + rotationVelocityY));
             }
 
             if (isGameMode) {
@@ -700,9 +808,10 @@
         animate();
 
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
+            const size = getViewportSize();
+            camera.aspect = size.width / size.height;
             camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setSize(size.width, size.height);
         });
     </script>
 </body>
