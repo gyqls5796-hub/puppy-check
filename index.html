@@ -183,15 +183,18 @@
                 </div>
             </div>
 
+            <!-- 최종 완료 모달창 (문구 수정 반영) -->
             <div id="eventModal" class="hidden pointer-events-auto bg-white p-6 rounded-3xl shadow-2xl text-center border-4 border-red-50">
                 <div class="flex items-center justify-center gap-2 mb-2">
                     <span class="text-3xl">🎉</span>
                     <h2 id="modalTitle" class="text-3xl font-black text-gray-800">진드기 완벽 퇴치!</h2>
                 </div>
 
+                <!-- 1. 미참여 시 표시되는 선물 수령 영역 -->
                 <div id="freshUserSection">
-                    <p class="text-gray-700 text-base font-bold mb-4 leading-normal">
-                        팔로우나 구독하고 현장요원에게 화면을 보여주세요
+                    <p class="text-gray-700 text-base font-bold mb-4 leading-relaxed">
+                        인스타 팔로우나 유튜브 구독 후<br>
+                        현장요원에게 화면을 보여주세요.
                     </p>
                     <div class="space-y-3">
                         <button id="instaBtn" class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-black py-4 px-4 rounded-xl hover:opacity-90 shadow-md text-lg active:scale-95">
@@ -203,6 +206,7 @@
                     </div>
                 </div>
 
+                <!-- 2. 이미 선물을 수령한 경우 표시되는 중복 차단 영역 -->
                 <div id="alreadyJoinedSection" class="hidden my-3 p-4 bg-amber-50 rounded-xl border border-amber-200">
                     <div class="text-4xl mb-1">🎁</div>
                     <p class="text-base font-black text-amber-900 mb-0.5">이미 이벤트 선물을 수령하셨습니다</p>
@@ -223,7 +227,6 @@
     </div>
 
     <script>
-        // 사파리 브라우저 전체 줌아웃 방지
         window.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
         window.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
         window.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
@@ -245,10 +248,7 @@
         }
 
         let vp = getViewportSize();
-        // near 값을 0.01로 주어 확대해도 모델이 잘리지 않음
         const camera = new THREE.PerspectiveCamera(45, vp.width / vp.height, 0.01, 100);
-        
-        // 발이 가려지지 않도록 카메라와 타겟의 중심을 살짝 위로(-0.1) 올림
         camera.position.set(0, 0.65, 5.8); 
         camera.lookAt(0, -0.1, 0);
 
@@ -281,13 +281,11 @@
                 const size = box.getSize(new THREE.Vector3());
                 
                 const maxDim = Math.max(size.x, size.y, size.z);
-                const targetSize = 3.3; // 화면에 쏙 들어오게 크기 최적화
+                const targetSize = 3.3;
                 const scale = targetSize / maxDim;
                 
                 wrapper.scale.setScalar(scale);
                 wrapper.position.sub(center.multiplyScalar(scale)); 
-                
-                // 강아지 발이 하단 박스에 가려지지 않도록 Y축 위치를 올림 (-0.5 -> -0.1)
                 wrapper.position.y -= 0.1; 
 
                 dogGroup.add(wrapper);
@@ -304,9 +302,6 @@
             }
         );
 
-        /* -----------------------------------------------------------
-           [안전한 1손가락 360도 회전 & 2손가락 부드러운 3D 핀치 줌]
-        ----------------------------------------------------------- */
         let isDragging = false;
         let isPinching = false;
         let previousTouchX = 0;
@@ -345,20 +340,17 @@
         function onTouchMove(e) {
             if (!isGameMode) return;
 
-            // 두 손가락 3D 줌인 / 줌아웃 (카메라 거리만 조절, 사파리 줌 차단)
             if (e.touches && e.touches.length === 2 && isPinching) {
                 e.preventDefault();
                 const currentDistance = getDistance(e.touches[0], e.touches[1]);
                 const scale = initialPinchDistance / currentDistance;
                 
-                // 최소 3.6(적당히 크게 확대) ~ 최대 6.8(전체 보기) 사이로 엄격 제한
                 let targetZ = initialCameraZ * scale;
                 targetZ = Math.max(3.6, Math.min(6.8, targetZ));
                 camera.position.z = targetZ;
                 return;
             }
 
-            // 한 손가락 360도 회전
             if (isDragging) {
                 let currentX, currentY;
                 if (e.touches && e.touches.length === 1) {
@@ -390,7 +382,6 @@
             isPinching = false;
         }
 
-        // 마우스 휠 줌도 안전하게 지원
         container.addEventListener('wheel', (e) => {
             if (!isGameMode) return;
             e.preventDefault();
@@ -438,13 +429,12 @@
             }
         }
 
-        // 모델 중심 상향 조정에 맞춰 마커의 Y축 좌표도 +0.4씩 올려줌
         const baseMarkerPositions = [
-            new THREE.Vector3(1.18, 1.10, -0.21), // 귓속
-            new THREE.Vector3(1.12, 0.30, 0.04),  // 목주변
-            new THREE.Vector3(0.73, -1.41, -0.22), // 발가락사이 (위로 올라와 하단 박스에 안 가림)
-            new THREE.Vector3(-1.35, -0.10, 0.0), // 꼬리(항문·사타구니)
-            new THREE.Vector3(-0.08, 0.12, -0.39) // 몸 전체
+            new THREE.Vector3(1.18, 1.10, -0.21),
+            new THREE.Vector3(1.12, 0.30, 0.04),
+            new THREE.Vector3(0.73, -1.41, -0.22),
+            new THREE.Vector3(-1.35, -0.10, 0.0),
+            new THREE.Vector3(-0.08, 0.12, -0.39)
         ];
 
         const tickMoveParams = [
@@ -694,7 +684,6 @@
                 .easing(TWEEN.Easing.Quadratic.Out)
                 .start();
             
-            // 시야 확보: 발까지 다 보이도록 카메라 각도 조절
             await moveCamera(new THREE.Vector3(0, 0.55, 5.2), new THREE.Vector3(0, -0.1, 0), 800);
 
             showDescription('강아지를 돌리고 두 손가락으로 확대하며 숨은 진드기 5마리를 터치하세요!');
